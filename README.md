@@ -16,13 +16,9 @@ Russell Salacup – 7177884 <br>
 
 Project Description:
 
-We aim to provide computer science students with an application that generates an optimal schedule tailored towards helping them achieve their academic goals. 
-The software’s core objective would be to make sure students are able to make informed decisions concerning their academic paths in order to mitigate  difficulty, 
-stress and uncertainty. Essentially the app is every university student’s handheld advisor, supporting them throughout their academic journey.
+We aim to develop an application that generates an optimal academic schedule tailored to each student’s goals. Its primary objective is to help students make informed decisions about their academic paths, reducing difficulty, stress, and uncertainty. Course Mix will serve as a personal, on-demand academic advisor, supporting students throughout their university journey.
 
 Project Solution:
 
-The Course Mix app allows computer science students at Brock to view their courses, planning details, and suggestions in an all in one hub environment. 
-Here you will be able to see course difficulties, suggested course loads, suggested schedules, etc. This app will help students to not only have a 
-personal academic advisor alternative available 24/7, but also lets students take more control and charge over their academic journey, 
-and see better results in line with their academic goals.
+Course Mix provides Brock University students with a comprehensive hub for academic planning. The app serves as a one-stop destination, providing users with a centralized platform to view courses, access planning details, and receive personalized suggestions. Features include insights into course difficulty, recommended course loads, and customized schedules. Course Mix functions as a 24/7 academic advisor, giving students greater control over their academic journey and helping them achieve better results aligned with their goals.
+
