@@ -1,16 +1,18 @@
+# COSC4P02Project
 Group project for COSC 4P02! Winter 2025 term.
 
 TITLE: Course Mix App for Computer Science Students at Brock University
+
 TEAM NAME: The Mixers
 
-MEMBERS:
-Ashu Chauhan – 7001571 
-Avi Patel – 6741961 
-Fatima Abourida - 7119490
-Jerome Uwaneme -7141270 
-Olaoluwa Akanji - 6908776 
-Oreoluwa Akanji - 6910483
-Russell Salacup – 7177884 
+MEMBERS:<br>
+Ashu Chauhan – 7001571 <br>
+Avi Patel – 6741961 <br>
+Fatima Abourida - 7119490<br>
+Jerome Uwaneme -7141270<br> 
+Olaoluwa Akanji - 6908776 <br>
+Oreoluwa Akanji - 6910483<br>
+Russell Salacup – 7177884 <br>
 
 Project Description:
 
