@@ -16,7 +16,7 @@ Russell Salacup – 7177884 <br>
 
 Project Description:
 
-We aim to develop an application that generates an optimal academic schedule tailored to each student’s goals. Its primary objective is to help students make informed decisions about their academic paths, reducing difficulty, stress, and uncertainty. Course Mix will serve as a personal, on-demand academic advisor, supporting students throughout their university journey.
+We aim to develop an application that creates personalized academic schedules tailored to each student’s goals, starting with a focus on computer science students. If time allows, we plan to expand to other programs. The primary objective of Course Mix is to allow students to make informed decisions about their academic journeys, reducing stress, uncertainty, and challenges. By serving as a personal, on-demand academic advisor, Course Mix will guide students every step of the way throughout their university experience.
 
 Project Solution:
 
