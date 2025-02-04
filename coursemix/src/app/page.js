@@ -1,10 +1,11 @@
 import Navbar from '../components/Navbar';
+import Link from 'next/link';
 
 export default function Home() {
   return (
     <main className="bg-sky-100 min-h-screen">
 
-      <div className=" bg-my-blue-gradient py-20"> {/* Hero section wrapped in a div */}
+      <div className=" bg-gradient-to-b from-[rgba(0,118,191,0.55)] via-[rgba(0,113,184,0.53)] to-[rgba(0,55,89,0.3)] py-40"> {/* Hero section */}
         <div className="container mx-auto text-center">
           <h1 className="text-5xl font-bold text-gray-800 leading-tight mb-4">
             Your Personal Academic Advisor
@@ -12,9 +13,11 @@ export default function Home() {
           <p className="text-xl text-gray-600 mb-8">
             Revolutionizing academic advising and empowering students through personalized, data-driven solutions.
           </p>
-          <button className="bg-black hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg text-lg">
-            Get Started
-          </button>
+          <Link href="/register">
+            <button className="bg-black hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg text-lg">
+              Get Started
+            </button>
+          </Link>
         </div>
       </div> {/* End of hero div */}
 
@@ -62,8 +65,8 @@ export default function Home() {
       </section>
       
       {/* Student Testimony */}
-      <div className=" bg-my-blue-gradient py-20">
-        <div className="container mx-auto text-center">
+      <div className="bg-gradient-to-b from-[rgba(0,118,191,0.55)] via-[rgba(0,113,184,0.53)] to-[rgba(0,55,89,0.3)] py-20">
+        <div className="container mx-auto text-center max-w-3xl px-4">
           <h1 className="text-5xl font-bold text-gray-800 leading-tight mb-4">
             Student Testimonies
           </h1>
@@ -76,12 +79,14 @@ export default function Home() {
 
       {/* Final Push */}
       <div className='bg-white py-20'>
-        <div className=' container mx-auto text-center'>
+        <div className='container mx-auto text-center'>
           <h1 className='text-4xl font-bold text-black'>Ready to Transform Your Academic Journey</h1>
           <p className='text-xl text-gray-600 mb-8 pt-4'>Join Course Mix today and revolutionize your academic experience.</p>
-          <button className="bg-black hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg text-lg">
-            Start Planning now
-          </button>
+          <Link href="/register">
+            <button className="bg-black hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg text-lg">
+              Start Planning now
+            </button>
+          </Link>
         </div>
       </div>
 

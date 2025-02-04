@@ -1,9 +1,6 @@
-import React from 'react'
+"use client"
+import Register from "@/components/Register";
 
-const Register = () => {
-  return (
-    <Register />
-  )
+export default function RegisterPage() {
+    return <Register />
 }
-
-export default Register

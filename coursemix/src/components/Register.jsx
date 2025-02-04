@@ -1,54 +1,83 @@
 import { useState } from 'react';
-import { supabase } from '../supabaseClient'; // Assuming you have this setup
+import { supabase } from '../supabaseClient';
+import { useRouter } from 'next/navigation';
 
 function Register() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: ''
   });
+  const [isValidEmail, setIsValidEmail] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // Validate @brocku.ca email addresses as the user types.
+    if (name === 'email') {
+      setIsValidEmail(value === '' || value.endsWith('@brocku.ca'));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
-    // Validate email domain
+  
+    // Client-side validation for email and password matching.
     if (!formData.email.endsWith('@brocku.ca')) {
       setError('Only @brocku.ca email addresses are allowed');
       setLoading(false);
       return;
     }
-
-    // Validate passwords match
+  
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords don't match");
       setLoading(false);
       return;
     }
-
+  
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Check if a user with this email already exists by calling our API endpoint.
+      const checkRes = await fetch('/api/checkUser', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email })
+      });
+  
+      const checkData = await checkRes.json();
+      if (checkData.exists) {
+        setError('An account with this email already exists');
+        setLoading(false);
+        return;
+      }
+  
+      // Proceed with registration if the user doesn't exist.
+      const { error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
       });
-
-      if (error) throw error;
-
-      setSuccess(true);
-      setFormData({ email: '', password: '', confirmPassword: '' });
-    } catch (error) {
-      setError(error.message);
+  
+      if (signUpError) {
+        setError(signUpError.message);
+      } else {
+        setSuccess(true);
+        setFormData({ email: '', password: '', confirmPassword: '' });
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+      console.error('Registration error:', err);
     } finally {
       setLoading(false);
     }
@@ -80,9 +109,14 @@ function Register() {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+            placeholder="your.name@brocku.ca"
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500
+              ${!isValidEmail ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
             required
           />
+          {!isValidEmail && formData.email && (
+            <p className="text-red-500 text-xs mt-1">Must be a @brocku.ca email address</p>
+          )}
         </div>
 
         <div className="mb-4">
@@ -94,6 +128,7 @@ function Register() {
             name="password"
             value={formData.password}
             onChange={handleChange}
+            placeholder="Enter a strong password"
             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
             required
           />
@@ -108,6 +143,7 @@ function Register() {
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
+            placeholder="Confirm your password"
             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
             required
           />
