@@ -23,6 +23,13 @@ function Register() {
     setError(null);
     setLoading(true);
 
+    // Validate email domain
+    if (!formData.email.endsWith('@brocku.ca')) {
+      setError('Only @brocku.ca email addresses are allowed');
+      setLoading(false);
+      return;
+    }
+
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords don't match");
