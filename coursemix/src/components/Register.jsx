@@ -32,7 +32,6 @@ function Register() {
     setError(null);
     setLoading(true);
   
-    // Client-side validation for email and password matching.
     if (!formData.email.endsWith('@brocku.ca')) {
       setError('Only @brocku.ca email addresses are allowed');
       setLoading(false);
@@ -46,21 +45,6 @@ function Register() {
     }
   
     try {
-      // Check if a user with this email already exists by calling our API endpoint.
-      const checkRes = await fetch('/api/checkUser', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email })
-      });
-  
-      const checkData = await checkRes.json();
-      if (checkData.exists) {
-        setError('An account with this email already exists');
-        setLoading(false);
-        return;
-      }
-  
-      // Proceed with registration if the user doesn't exist.
       const { error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -70,14 +54,13 @@ function Register() {
       });
   
       if (signUpError) {
-        setError(signUpError.message);
-      } else {
-        setSuccess(true);
-        setFormData({ email: '', password: '', confirmPassword: '' });
+        throw new Error(signUpError.message);
       }
+  
+      setSuccess(true);
+      setFormData({ email: '', password: '', confirmPassword: '' });
     } catch (err) {
-      setError('An unexpected error occurred');
-      console.error('Registration error:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -95,7 +78,7 @@ function Register() {
       
       {success && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-          Registration successful! Please check your email for verification.
+          A verification link has been sent to your email address.
         </div>
       )}
 

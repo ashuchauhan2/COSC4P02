@@ -18,15 +18,18 @@ export default function SignIn() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) throw error
       
-      // Redirect to home page after successful sign in
-      router.push('/')
+      // Wait a brief moment to ensure the session is properly set
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      router.push('/dashboard')
+      router.refresh()
       
     } catch (error) {
       setError(error.message)
