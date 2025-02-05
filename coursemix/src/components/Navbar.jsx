@@ -32,10 +32,10 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white p-4">
+    <nav className="bg-black p-4">
       <div className="container mx-auto flex justify-between items-center">
         <div>
-          <Link href="/" className="font-bold text-xl">
+          <Link href="/" className="font-bold text-xl text-white ">
             Logo
           </Link>
         </div>
@@ -51,7 +51,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/signin" className="mr-4 hover:text-blue-500">
+              <Link href="/signin" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-3">
                 Sign In
               </Link>
               <Link href="/register" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
