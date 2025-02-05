@@ -15,17 +15,26 @@ export default function Navbar() {
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+      // Redirect based on auth state
+      if (session?.user) {
+        router.push('/dashboard')
+      } else {
+        router.push('/')
+      }
     })
 
-    // Get initial session
+    // Get initial session and redirect
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        router.push('/dashboard')
+      }
     })
 
     return () => {
       authListener?.subscription?.unsubscribe()
     }
-  }, [])
+  }, [router])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -38,12 +47,28 @@ export default function Navbar() {
     setIsMenuOpen(!isMenuOpen)
   }
 
+  //if user is logged in, logo redirects to dashboard route, if not logo redirects to root route
+  const handleLogoClick = (e) => {
+    e.preventDefault()
+    if (user) {
+      router.push('/dashboard')
+      router.refresh()
+    } else {
+      router.push('/')
+      router.refresh()
+    }
+  }
+
   return (
     <nav className="bg-white border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="font-bold text-xl text-gray-800 hover:text-teal-600 transition-colors">
+          <Link 
+            href={user ? "/dashboard" : "/"} 
+            onClick={handleLogoClick}
+            className="font-bold text-xl text-gray-800 hover:text-teal-600 transition-colors"
+          >
             Course Mix
           </Link>
 
