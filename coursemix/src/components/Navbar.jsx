@@ -32,30 +32,46 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-black p-4">
-      <div className="container mx-auto flex justify-between items-center">
+    <nav className="bg-white border-b border-gray-200">
+      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div>
-          <Link href="/" className="font-bold text-xl text-white ">
-            Logo
+          <Link href="/" className="font-bold text-xl text-gray-800 hover:text-teal-600 transition-colors">
+            Course Mix
           </Link>
         </div>
-        <div>
+        <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Link href="/dashboard" className="mr-4 hover:text-blue-500">
+              <Link 
+                href="/dashboard" 
+                className="text-gray-600 hover:text-teal-600 transition-colors"
+              >
                 Dashboard
               </Link>
-              <Button onClick={handleSignOut} variant="outline">
+              <Button 
+                onClick={handleSignOut} 
+                variant="outline"
+                className="border-gray-200 hover:border-teal-500 hover:text-teal-600 transition-colors"
+              >
                 Sign Out
               </Button>
             </>
           ) : (
             <>
-              <Link href="/signin" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-3">
-                Sign In
+              <Link href="/signin">
+                <Button 
+                  variant="outline"
+                  className="border-gray-200 hover:border-teal-500 hover:text-teal-600 transition-colors"
+                >
+                  Sign In
+                </Button>
               </Link>
-              <Link href="/register" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Register
+              <Link href="/register">
+                <Button 
+                  className="bg-teal-600 hover:bg-teal-700 text-white transition-colors"
+                >
+                  Register
+                </Button>
               </Link>
             </>
           )}
