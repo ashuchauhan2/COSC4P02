@@ -11,12 +11,45 @@ export default function ContactPage() {
     subject: '',
     message: ''
   })
-  const [submitted, setSubmitted] = useState(false)
+  const [status, setStatus] = useState({
+    submitted: false,
+    submitting: false,
+    error: null
+  })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Add your form submission logic here
-    setSubmitted(true)
+    setStatus({ submitted: false, submitting: true, error: null })
+
+    try {
+      const res = await fetch('/api/send-contact-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+
+      const data = await res.json()
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Error sending message')
+      }
+
+      setStatus({ submitted: true, submitting: false, error: null })
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      })
+    } catch (error) {
+      setStatus({
+        submitted: false,
+        submitting: false,
+        error: error.message
+      })
+    }
   }
 
   return (
@@ -26,13 +59,19 @@ export default function ContactPage() {
           <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">Contact Us</h1>
 
           <div className="bg-white rounded-lg shadow-sm p-8">
-            {submitted ? (
+            {status.submitted ? (
               <div className="text-center py-8">
                 <div className="text-teal-600 text-xl mb-4">Thank you for your message!</div>
                 <p className="text-gray-600">We'll get back to you as soon as possible.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
+                {status.error && (
+                  <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-3 text-sm">
+                    {status.error}
+                  </div>
+                )}
+
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                     Name
@@ -91,9 +130,10 @@ export default function ContactPage() {
 
                 <Button
                   type="submit"
+                  disabled={status.submitting}
                   className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white transition-colors"
                 >
-                  Send Message
+                  {status.submitting ? 'Sending...' : 'Send Message'}
                 </Button>
               </form>
             )}
@@ -104,7 +144,7 @@ export default function ContactPage() {
             <div className="space-y-4">
               <div>
                 <h3 className="font-medium text-teal-600">Email</h3>
-                <p className="text-gray-600">support@coursemix.com</p>
+                <p className="text-gray-600">coursemixtroubleshoot@gmail.com</p>
               </div>
               <div>
                 <h3 className="font-medium text-teal-600">Location</h3>

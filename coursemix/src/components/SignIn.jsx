@@ -106,6 +106,17 @@ export default function SignIn() {
               </div>
             </div>
 
+            <div className="flex items-center justify-between mb-6">
+              <div className="text-sm">
+                <Link
+                  href="/forgot-password"
+                  className="text-teal-600 hover:text-teal-500 transition-colors"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
+            </div>
+
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-3 text-sm">
                 {error}
