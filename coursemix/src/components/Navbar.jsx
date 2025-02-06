@@ -14,21 +14,18 @@ export default function Navbar() {
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
-      // Redirect based on auth state
-      if (session?.user) {
+      // Only redirect on specific auth events
+      if (event === 'SIGNED_IN') {
         router.push('/dashboard')
-      } else {
+      } else if (event === 'SIGNED_OUT') {
         router.push('/')
       }
+      setUser(session?.user ?? null)
     })
 
-    // Get initial session and redirect
+    // Get initial session but don't redirect
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
-      if (session?.user) {
-        router.push('/dashboard')
-      }
     })
 
     return () => {
@@ -38,8 +35,6 @@ export default function Navbar() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
     setIsMenuOpen(false)
   }
 
@@ -47,15 +42,13 @@ export default function Navbar() {
     setIsMenuOpen(!isMenuOpen)
   }
 
-  //if user is logged in, logo redirects to dashboard route, if not logo redirects to root route
+  // Only redirect on logo click
   const handleLogoClick = (e) => {
     e.preventDefault()
     if (user) {
       router.push('/dashboard')
-      router.refresh()
     } else {
       router.push('/')
-      router.refresh()
     }
   }
 
