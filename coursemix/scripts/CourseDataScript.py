@@ -56,7 +56,7 @@ def get_and_insert_course_info(program_code):
                     }
                     
                     # Insert data into Supabase
-                    data, count = supabase.table('courses').insert(course_data).execute()
+                    response = supabase.table('courses').insert(course_data).execute()
                     inserted_count += 1
                     
                 except Exception as e:
