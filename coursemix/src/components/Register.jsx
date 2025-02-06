@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import AnimatedBadger from '@/components/AnimatedBadger';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ function Register() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [activeInput, setActiveInput] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -101,6 +103,19 @@ function Register() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-sm rounded-lg sm:px-10 border border-gray-200">
+          <AnimatedBadger 
+            activeInput={activeInput} 
+            inputValue={
+              activeInput === 'email'
+                ? formData.email
+                : activeInput === 'password'
+                ? formData.password
+                : activeInput === 'confirmPassword'
+                ? formData.confirmPassword
+                : ''
+            } 
+          />
+
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-3 text-sm mb-6">
               {error}
@@ -128,6 +143,8 @@ function Register() {
                   required
                   className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
                   placeholder="youremail@brocku.ca"
+                  onFocus={() => setActiveInput('email')}
+                  onBlur={() => setActiveInput(null)}
                 />
                 {!isValidEmail && formData.email && (
                   <p className="mt-1 text-sm text-red-600">Must be a @brocku.ca email address</p>
@@ -149,6 +166,8 @@ function Register() {
                   required
                   className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
                   placeholder="Create a strong password"
+                  onFocus={() => setActiveInput('password')}
+                  onBlur={() => setActiveInput(null)}
                 />
                 {formData.password && !validatePassword(formData.password) && (
                   <p className="mt-1 text-sm text-red-600">
@@ -172,6 +191,8 @@ function Register() {
                   required
                   className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
                   placeholder="Confirm your password"
+                  onFocus={() => setActiveInput('confirmPassword')}
+                  onBlur={() => setActiveInput(null)}
                 />
               </div>
             </div>
