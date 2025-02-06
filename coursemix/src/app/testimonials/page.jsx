@@ -5,20 +5,20 @@ import Link from 'next/link';
 export default function TestimonialsPage() {
   const testimonials = [
     {
-      quote: "Course Mix helped me plan my Computer Science degree efficiently. The prerequisite checker saved me from registration headaches and helped me plan my courses in the optimal order.",
+      quote: "Course Mix's intuitive interface made it easy to plan my courses around my part-time job. The schedule visualization helped me maintain a healthy work-study balance.",
       author: "Olaluwa",
-      program: "Computer Science",
-      year: "4th Year"
-    },
-    {
-      quote: "As a Computer Science student, understanding the course sequence was challenging. Course Mix made it crystal clear which courses I needed each term.",
-      author: "Fatima",
       program: "Computer Science",
       year: "3rd Year"
     },
     {
-      quote: "The schedule planning feature is fantastic! It helped me balance my core CS courses with my math requirements and electives perfectly.",
-      author: "Kitan",
+      quote: "As a professor, I've seen students struggle with course selection. Course Mix provides the guidance students need to make informed decisions about their academic journey.",
+      author: "Naser",
+      program: "Professor of Computer Science",
+      year: "Faculty"
+    },
+    {
+      quote: "The prerequisite checker is a game-changer. It helped me understand the course dependencies and plan my degree path more effectively.",
+      author: "Anonymous",
       program: "Computer Science",
       year: "3rd Year"
     },
@@ -30,7 +30,7 @@ export default function TestimonialsPage() {
     },
     {
       quote: "Course Mix helped me organize my courses so I could complete my AI concentration efficiently. The planning tools are invaluable for specializations.",
-      author: "Avi Patel",
+      author: "Avi",
       program: "Computer Science",
       year: "4th Year"
     },
@@ -39,7 +39,25 @@ export default function TestimonialsPage() {
       author: "Russel",
       program: "Computer Science",
       year: "3rd Year"
-    }
+    },
+    {
+      quote: "I like being able to have an academic advising alternative available online 24/7, this is very convenient and allows me to take true ownership of my academic journey.",
+      author: "Ashu",
+      program: "Computer Science",
+      year: "4th Year"
+    },
+    {
+      quote: "Course Mix helped me understand Brock's course system quickly. The prerequisite checker is especially helpful for staying on track.",
+      author: "Oreoluwa",
+      program: "Computer Science",
+      year: "3rd Year"
+    },
+    {
+      quote: "I love how Course Mix helps me plan ahead. Being able to see all available course options and their schedules in advance makes registration stress-free.",
+      author: "Fatima",
+      program: "Computer Science",
+      year: "3rd Year"
+    },
   ];
 
   return (
