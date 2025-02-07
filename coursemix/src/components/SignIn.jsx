@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import AnimatedBadger from '@/components/AnimatedBadger'
+import Spinner from '@/components/Spinner'
 
 export default function SignIn() {
   const router = useRouter()
@@ -55,7 +56,7 @@ export default function SignIn() {
       }
 
       // Redirect to dashboard
-      router.push('/dashboard')
+      router.push('/protected/dashboard')
       router.refresh()
     } catch (error) {
       console.error('Sign in error:', error)
@@ -63,6 +64,10 @@ export default function SignIn() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (loading) {
+    return <Spinner />;
   }
 
   return (

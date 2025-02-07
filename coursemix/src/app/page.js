@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import LandingPage from '@/components/LandingPage';
-
+import Spinner from '@/components/Spinner';
 export default function Home() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -13,7 +13,7 @@ export default function Home() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          router.push('/dashboard');
+          router.push('/protected/dashboard');
         }
       } finally {
         setLoading(false);
@@ -24,7 +24,7 @@ export default function Home() {
   }, [router]);
 
   if (loading) {
-    return <div>Loading...</div>; // You might want to add a proper loading spinner here
+    return <Spinner />
   }
 
   return <LandingPage />;

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import AnimatedBadger from '@/components/AnimatedBadger'
+import Spinner from '@/components/Spinner'
 
 export default function Register() {
   const router = useRouter()
@@ -123,6 +124,10 @@ export default function Register() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (loading) {
+    return <Spinner />;
   }
 
   return (
