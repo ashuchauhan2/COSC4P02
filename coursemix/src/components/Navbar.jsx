@@ -13,25 +13,56 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      // Only redirect on specific auth events
-      if (event === 'SIGNED_IN') {
-        router.push('/dashboard')
-      } else if (event === 'SIGNED_OUT') {
-        router.push('/')
-      }
-      setUser(session?.user ?? null)
-    })
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        // Check if user is verified before setting user state
+        const { data: verificationData } = await supabase
+          .from('user_verification')
+          .select('is_verified')
+          .eq('email', session.user.email)
+          .single();
 
-    // Get initial session but don't redirect
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
+        if (verificationData?.is_verified) {
+          setUser(session.user);
+          if (event === 'SIGNED_IN') {
+            router.push('/dashboard');
+          }
+        } else {
+          // Sign out if not verified
+          await supabase.auth.signOut();
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+        if (event === 'SIGNED_OUT') {
+          router.push('/');
+        }
+      }
+    });
+
+    // Initial session check
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        // Check verification status on initial load
+        const { data: verificationData } = await supabase
+          .from('user_verification')
+          .select('is_verified')
+          .eq('email', session.user.email)
+          .single();
+
+        if (!verificationData?.is_verified) {
+          await supabase.auth.signOut();
+          setUser(null);
+        } else {
+          setUser(session.user);
+        }
+      }
+    });
 
     return () => {
-      authListener?.subscription?.unsubscribe()
-    }
-  }, [router])
+      authListener?.subscription?.unsubscribe();
+    };
+  }, [router]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()

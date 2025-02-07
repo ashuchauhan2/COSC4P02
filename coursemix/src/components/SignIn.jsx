@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -29,19 +29,44 @@ export default function SignIn() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      // First attempt to sign in
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-      })
-      if (error) throw error
-      router.push('/dashboard')
-      router.refresh()
+      });
+      
+      if (signInError) throw signInError;
+
+      // After successful sign in, check verification status
+      const { data: verificationData, error: verificationError } = await supabase
+        .from('user_verification')
+        .select('is_verified')
+        .eq('user_id', signInData.user.id)
+        .single();
+
+      if (verificationError) {
+        // If there's an error checking verification, sign out and throw error
+        await supabase.auth.signOut();
+        throw verificationError;
+      }
+
+      if (!verificationData || !verificationData.is_verified) {
+        // If not verified, sign out and show error
+        await supabase.auth.signOut();
+        setError('Please verify your email before signing in');
+        return;
+      }
+
+      // If verified, proceed to dashboard
+      router.push('/dashboard');
+      router.refresh();
     } catch (error) {
-      setError(error.message)
+      console.error('Sign in error:', error);
+      setError(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -66,6 +91,12 @@ export default function SignIn() {
                 : ''
             } 
           />
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-3 text-sm mb-6">
+              {error}
+            </div>
+          )}
 
           <form className="space-y-6" onSubmit={handleSignIn}>
             <div>
@@ -117,21 +148,13 @@ export default function SignIn() {
               </div>
             </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-3 text-sm">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white transition-colors"
-              >
-                {loading ? 'Signing in...' : 'Sign in'}
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white transition-colors"
+            >
+              {loading ? 'Signing in...' : 'Sign in'}
+            </Button>
           </form>
 
           <div className="mt-6">
