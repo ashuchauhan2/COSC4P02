@@ -53,7 +53,7 @@ export default function LandingPage() {
                 description: "Discuss and rate courses with peers to discover efficient course combinations."
               }
             ].map((feature, index) => (
-              <Link href="/dashboard" key={index}>
+              <Link href="/protected/dashboard" key={index}>
                 <div className="bg-gray-50 p-8 rounded-lg border border-gray-200 hover:border-teal-500/30 transition-all duration-200 hover:shadow-md group">
                   <span className="text-4xl mb-4 block">{feature.icon}</span>
                   <h3 className="text-xl font-semibold mb-3 text-gray-800 group-hover:text-teal-600 transition-colors">
