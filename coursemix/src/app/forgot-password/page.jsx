@@ -5,37 +5,117 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import AnimatedBadger from '@/components/AnimatedBadger'
 
 export default function ForgotPassword() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [codeSent, setCodeSent] = useState(false)
   const [error, setError] = useState(null)
   const [activeInput, setActiveInput] = useState(null)
+
+  const handleSendCode = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Generate a 6-digit code
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
+      
+      // Store the code in Supabase with an expiration time (1 hour)
+      const { error: storeError } = await supabase
+        .from('reset_codes')
+        .insert([
+          {
+            email,
+            code,
+            expires_at: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
+            used: false
+          }
+        ])
+
+      if (storeError) throw storeError
+
+      // Send email with the code using Resend
+      const res = await fetch('/api/reset-password-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, code })
+      })
+
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error)
+
+      setCodeSent(true)
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleResetPassword = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    setSuccess(false)
 
-    const redirectURL = `${window.location.origin}/reset-password`
-    console.log('Redirect URL:', redirectURL) // Debug URL
+    if (newPassword !== confirmPassword) {
+      setError("Passwords don't match")
+      setLoading(false)
+      return
+    }
 
     try {
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectURL,
+      // Verify the code
+      const { data: codes, error: fetchError } = await supabase
+        .from('reset_codes')
+        .select('*')
+        .eq('email', email)
+        .eq('code', verificationCode)
+        .eq('used', false)
+        .gte('expires_at', new Date().toISOString())
+        .single()
+
+      if (fetchError) throw fetchError
+      if (!codes) throw new Error('Invalid or expired code')
+
+      // Update password
+      const res = await fetch('/api/reset-password-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email, // Send email instead of user ID
+          password: newPassword
+        })
       })
-      
-      if (error) throw error
-      
-      // Log success even if email not received
-      console.log('Reset password request successful:', data)
-      
-      setSuccess(true)
-      setEmail('')
+
+      const data = await res.json()
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to reset password')
+      }
+
+      // Mark code as used
+      const { error: markUsedError } = await supabase
+        .from('reset_codes')
+        .update({ used: true })
+        .eq('id', codes.id)
+
+      if (markUsedError) throw markUsedError
+
+      // Redirect to sign in
+      router.push('/signin')
     } catch (error) {
+      console.error('Reset error:', error)
       setError(error.message)
     } finally {
       setLoading(false)
@@ -49,7 +129,10 @@ export default function ForgotPassword() {
           Reset your password
         </h2>
         <p className="text-center text-gray-600 mb-8">
-          Enter your email address and we'll send you a link to reset your password
+          {!codeSent 
+            ? "Enter your email address and we'll send you a code to reset your password"
+            : "Enter the verification code sent to your email"
+          }
         </p>
       </div>
 
@@ -65,41 +148,98 @@ export default function ForgotPassword() {
               {error}
             </div>
           )}
-          
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-600 rounded-md p-3 text-sm mb-6">
-              Check your email for a password reset link
-            </div>
-          )}
 
-          <form onSubmit={handleResetPassword} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <div className="mt-1">
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setActiveInput('email')}
-                  onBlur={() => setActiveInput(null)}
-                  required
-                  className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
-                  placeholder="Enter your email"
-                />
+          {!codeSent ? (
+            <form onSubmit={handleSendCode} className="space-y-6">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email address
+                </label>
+                <div className="mt-1">
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setActiveInput('email')}
+                    onBlur={() => setActiveInput(null)}
+                    required
+                    className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
+                    placeholder="Enter your email"
+                  />
+                </div>
               </div>
-            </div>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white transition-colors"
-            >
-              {loading ? 'Sending...' : 'Send reset link'}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white transition-colors"
+              >
+                {loading ? 'Sending...' : 'Send reset code'}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleResetPassword} className="space-y-6">
+              <div>
+                <label htmlFor="code" className="block text-sm font-medium text-gray-700">
+                  Verification Code
+                </label>
+                <div className="mt-1">
+                  <Input
+                    id="code"
+                    type="text"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    required
+                    className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
+                    placeholder="Enter 6-digit code"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
+                  New Password
+                </label>
+                <div className="mt-1">
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
+                    placeholder="Enter new password"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                  Confirm New Password
+                </label>
+                <div className="mt-1">
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
+                    placeholder="Confirm new password"
+                  />
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white transition-colors"
+              >
+                {loading ? 'Resetting...' : 'Reset Password'}
+              </Button>
+            </form>
+          )}
 
           <div className="mt-6">
             <div className="relative">
