@@ -176,7 +176,7 @@ export default function Register() {
                     onBlur={() => setActiveInput(null)}
                     required
                     className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
-                    placeholder="firstname@brocku.ca"
+                    placeholder="username@brocku.ca"
                   />
                 </div>
               </div>
@@ -195,7 +195,7 @@ export default function Register() {
                     onBlur={() => setActiveInput(null)}
                     required
                     className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
-                    placeholder="••••••••"
+                    placeholder="Enter a Password"
                   />
                 </div>
               </div>
@@ -214,7 +214,7 @@ export default function Register() {
                     onBlur={() => setActiveInput(null)}
                     required
                     className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
-                    placeholder="••••••••"
+                    placeholder="Enter a Password"
                   />
                 </div>
               </div>
