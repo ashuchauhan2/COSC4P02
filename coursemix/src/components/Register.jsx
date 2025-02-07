@@ -1,128 +1,139 @@
-"use client"
-
-import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import AnimatedBadger from '@/components/AnimatedBadger'
+import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import AnimatedBadger from "@/components/AnimatedBadger";
+import Spinner from "@/components/Spinner";
 
 export default function Register() {
-  const router = useRouter()
+  const router = useRouter();
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: ''
-  })
-  const [verificationCode, setVerificationCode] = useState('')
-  const [showVerification, setShowVerification] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [activeInput, setActiveInput] = useState(null)
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [verificationCode, setVerificationCode] = useState("");
+  const [showVerification, setShowVerification] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [activeInput, setActiveInput] = useState(null);
+  const [passwordError, setPasswordError] = useState(null); // Added state for password error
 
   const validatePassword = (password) => {
-    const hasUpperCase = /[A-Z]/.test(password)
-    const hasLowerCase = /[a-z]/.test(password)
-    const hasNumber = /\d/.test(password)
-    const isLongEnough = password.length >= 8
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const isLongEnough = password.length >= 8;
 
-    if (!hasUpperCase) return "Password must contain at least one uppercase letter"
-    if (!hasLowerCase) return "Password must contain at least one lowercase letter"
-    if (!hasNumber) return "Password must contain at least one number"
-    if (!isLongEnough) return "Password must be at least 8 characters long"
-    return null
-  }
+    if (!hasUpperCase)
+      return "Password must contain at least one uppercase letter";
+    if (!hasLowerCase)
+      return "Password must contain at least one lowercase letter";
+    if (!hasNumber) return "Password must contain at least one number";
+    if (!isLongEnough) return "Password must be at least 8 characters long";
+    return null;
+  };
 
   const validateEmail = (email) => {
-    if (!email.toLowerCase().endsWith('@brocku.ca')) {
-      return "Please use your Brock University email (@brocku.ca)"
+    if (!email.toLowerCase().endsWith("@brocku.ca")) {
+      return "Please use your Brock University email (@brocku.ca)";
     }
-    return null
-  }
+    return null;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    setPasswordError(null); // Reset password error on submit
 
     try {
       // Validate email
-      const emailError = validateEmail(formData.email)
-      if (emailError) throw new Error(emailError)
+      const emailError = validateEmail(formData.email);
+      if (emailError) throw new Error(emailError);
 
       // Validate password
-      const passwordError = validatePassword(formData.password)
-      if (passwordError) throw new Error(passwordError)
+      const passwordError = validatePassword(formData.password);
+      if (passwordError) {
+        setPasswordError(passwordError); // Set password error if any
+        throw new Error(passwordError);
+      }
 
       // Check passwords match
       if (formData.password !== formData.confirmPassword) {
-        throw new Error("Passwords don't match")
+        throw new Error("Passwords don't match");
       }
 
       // Check if user already exists
       const { data: existingUser } = await supabase
-        .from('user_verification')
-        .select('email')
-        .eq('email', formData.email)
-        .single()
+        .from("user_verification")
+        .select("email")
+        .eq("email", formData.email)
+        .single();
 
       if (existingUser) {
-        throw new Error('An account with this email already exists')
+        throw new Error("An account with this email already exists");
       }
 
       // Generate verification code
-      const code = Math.floor(100000 + Math.random() * 900000).toString()
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
 
       // Send verification code
-      const res = await fetch('/api/verification-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/verification-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: formData.email,
           code,
-          password: formData.password // We'll store this temporarily
-        })
-      })
+          password: formData.password, // We'll store this temporarily
+        }),
+      });
 
-      const data = await res.json()
-      if (!data.success) throw new Error(data.error || 'Failed to send verification code')
+      const data = await res.json();
+      if (!data.success)
+        throw new Error(data.error || "Failed to send verification code");
 
-      setShowVerification(true)
+      setShowVerification(true);
     } catch (error) {
-      setError(error.message)
+      setError(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleVerification = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      const res = await fetch('/api/verify-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/verify-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: formData.email,
-          code: verificationCode
-        })
-      })
+          code: verificationCode,
+        }),
+      });
 
-      const data = await res.json()
+      const data = await res.json();
       if (!data.success) {
-        throw new Error(data.error || 'Verification failed')
+        throw new Error(data.error || "Verification failed");
       }
 
       // Redirect to sign in
-      router.push('/signin')
+      router.push("/signin");
     } catch (error) {
-      setError(error.message)
+      setError(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
+  };
+
+  if (loading) {
+    return <Spinner />;
   }
 
   return (
@@ -132,25 +143,24 @@ export default function Register() {
           Create your account
         </h2>
         <p className="text-center text-gray-600 mb-8">
-          {!showVerification 
+          {!showVerification
             ? "Join Course Mix using your Brock University email"
-            : "Enter the verification code sent to your email"
-          }
+            : "Enter the verification code sent to your email"}
         </p>
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-sm rounded-lg sm:px-10 border border-gray-200">
-          <AnimatedBadger 
-            activeInput={activeInput} 
+          <AnimatedBadger
+            activeInput={activeInput}
             inputValue={
-              activeInput === 'email'
+              activeInput === "email"
                 ? formData.email
-                : activeInput === 'password'
+                : activeInput === "password"
                 ? formData.password
-                : activeInput === 'confirmPassword'
+                : activeInput === "confirmPassword"
                 ? formData.confirmPassword
-                : ''
+                : ""
             }
           />
 
@@ -163,7 +173,10 @@ export default function Register() {
           {!showVerification ? (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Brock Email
                 </label>
                 <div className="mt-1">
@@ -171,18 +184,23 @@ export default function Register() {
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    onFocus={() => setActiveInput('email')}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    onFocus={() => setActiveInput("email")}
                     onBlur={() => setActiveInput(null)}
                     required
                     className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
-                    placeholder="firstname@brocku.ca"
+                    placeholder="username@brocku.ca"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Password
                 </label>
                 <div className="mt-1">
@@ -190,18 +208,64 @@ export default function Register() {
                     id="password"
                     type="password"
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    onFocus={() => setActiveInput('password')}
+                    onChange={(e) => {
+                      setFormData({ ...formData, password: e.target.value });
+                      setPasswordError(validatePassword(e.target.value)); // Update error dynamically
+                    }}
+                    onFocus={() => setActiveInput("password")}
                     onBlur={() => setActiveInput(null)}
                     required
                     className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
-                    placeholder="••••••••"
+                    placeholder="Enter a Password"
                   />
                 </div>
+
+                {/* Password strength feedback */}
+                <ul className="text-sm mt-2 text-gray-600">
+                  <li
+                    className={
+                      /[A-Z]/.test(formData.password)
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
+                    At least one uppercase letter
+                  </li>
+                  <li
+                    className={
+                      /[a-z]/.test(formData.password)
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
+                    At least one lowercase letter
+                  </li>
+                  <li
+                    className={
+                      /\d/.test(formData.password)
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
+                    At least one number
+                  </li>
+                  <li
+                    className={
+                      formData.password.length >= 8
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
+                    At least 8 characters long
+                  </li>
+                </ul>
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Confirm Password
                 </label>
                 <div className="mt-1">
@@ -209,12 +273,17 @@ export default function Register() {
                     id="confirmPassword"
                     type="password"
                     value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    onFocus={() => setActiveInput('confirmPassword')}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
+                    onFocus={() => setActiveInput("confirmPassword")}
                     onBlur={() => setActiveInput(null)}
                     required
                     className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
-                    placeholder="••••••••"
+                    placeholder="Enter a Password"
                   />
                 </div>
               </div>
@@ -224,13 +293,16 @@ export default function Register() {
                 disabled={loading}
                 className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white transition-colors"
               >
-                {loading ? 'Creating account...' : 'Create account'}
+                {loading ? "Creating account..." : "Create account"}
               </Button>
             </form>
           ) : (
             <form onSubmit={handleVerification} className="space-y-6">
               <div>
-                <label htmlFor="code" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="code"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Verification Code
                 </label>
                 <div className="mt-1">
@@ -251,7 +323,7 @@ export default function Register() {
                 disabled={loading}
                 className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white transition-colors"
               >
-                {loading ? 'Verifying...' : 'Verify Email'}
+                {loading ? "Verifying..." : "Verify Email"}
               </Button>
             </form>
           )}
@@ -262,7 +334,9 @@ export default function Register() {
                 <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Already have an account?</span>
+                <span className="px-2 bg-white text-gray-500">
+                  Already have an account?
+                </span>
               </div>
             </div>
 
@@ -280,5 +354,5 @@ export default function Register() {
         </div>
       </div>
     </div>
-  )
+  );
 }

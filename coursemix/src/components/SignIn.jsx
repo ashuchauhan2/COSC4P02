@@ -1,27 +1,35 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import AnimatedBadger from '@/components/AnimatedBadger'
-
-/**
- * AnimatedBadger component:
- * - When the password field is active, the badger's eyes are closed.
- * - Otherwise, the eyes smoothly move based on the input value, with a subtle blinking effect.
- * - The head also gently rotates to mimic natural micro-adjustments while reading.
- */
+import Spinner from '@/components/Spinner'
 
 export default function SignIn() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [activeInput, setActiveInput] = useState(null)
+
+  useEffect(() => {
+    // Load stored credentials if "Remember Me" was checked
+    const storedEmail = localStorage.getItem('rememberedEmail')
+    const storedPassword = localStorage.getItem('rememberedPassword')
+    const storedRememberMe = localStorage.getItem('rememberMe') === 'true'
+
+    if (storedRememberMe && storedEmail && storedPassword) {
+      setEmail(storedEmail)
+      setPassword(storedPassword)
+      setRememberMe(true)
+    }
+  }, [])
 
   const handleSignIn = async (e) => {
     e.preventDefault()
@@ -29,44 +37,38 @@ export default function SignIn() {
     setError(null)
 
     try {
-      // First attempt to sign in
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-      });
-      
-      if (signInError) throw signInError;
+      })
 
-      // After successful sign in, check verification status
-      const { data: verificationData, error: verificationError } = await supabase
-        .from('user_verification')
-        .select('is_verified')
-        .eq('user_id', signInData.user.id)
-        .single();
+      if (signInError) throw signInError
 
-      if (verificationError) {
-        // If there's an error checking verification, sign out and throw error
-        await supabase.auth.signOut();
-        throw verificationError;
+      // Save credentials if "Remember Me" is checked
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', email)
+        localStorage.setItem('rememberedPassword', password)
+        localStorage.setItem('rememberMe', 'true')
+      } else {
+        localStorage.removeItem('rememberedEmail')
+        localStorage.removeItem('rememberedPassword')
+        localStorage.removeItem('rememberMe')
       }
 
-      if (!verificationData || !verificationData.is_verified) {
-        // If not verified, sign out and show error
-        await supabase.auth.signOut();
-        setError('Please verify your email before signing in');
-        return;
-      }
-
-      // If verified, proceed to dashboard
-      router.push('/dashboard');
-      router.refresh();
+      // Redirect to dashboard
+      router.push('/protected/dashboard')
+      router.refresh()
     } catch (error) {
-      console.error('Sign in error:', error);
-      setError(error.message);
+      console.error('Sign in error:', error)
+      setError(error.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  if (loading) {
+    return <Spinner />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -83,13 +85,7 @@ export default function SignIn() {
         <div className="bg-white py-8 px-4 shadow-sm rounded-lg sm:px-10 border border-gray-200">
           <AnimatedBadger 
             activeInput={activeInput} 
-            inputValue={
-              activeInput === 'email'
-                ? email
-                : activeInput === 'password'
-                ? password
-                : ''
-            } 
+            inputValue={activeInput === 'email' ? email : activeInput === 'password' ? password : ''} 
           />
 
           {error && (
@@ -137,22 +133,29 @@ export default function SignIn() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between mb-6">
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                />
+                <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+                  Remember me
+                </label>
+              </div>
+
               <div className="text-sm">
-                <Link
-                  href="/forgot-password"
-                  className="text-teal-600 hover:text-teal-500 transition-colors"
-                >
+                <Link href="/forgot-password" className="text-teal-600 hover:text-teal-500 transition-colors">
                   Forgot your password?
                 </Link>
               </div>
             </div>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white transition-colors"
-            >
+            <Button type="submit" disabled={loading} className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white transition-colors">
               {loading ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>
@@ -169,10 +172,7 @@ export default function SignIn() {
 
             <div className="mt-6">
               <Link href="/register">
-                <Button
-                  variant="outline"
-                  className="w-full h-11 border-gray-200 hover:border-teal-500 hover:text-teal-600 transition-colors"
-                >
+                <Button variant="outline" className="w-full h-11 border-gray-200 hover:border-teal-500 hover:text-teal-600 transition-colors">
                   Create an account
                 </Button>
               </Link>
@@ -181,5 +181,5 @@ export default function SignIn() {
         </div>
       </div>
     </div>
-  );
+  )
 }

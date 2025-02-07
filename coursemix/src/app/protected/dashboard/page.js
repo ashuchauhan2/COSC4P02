@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import RequireAuth from '@/components/RequireAuth'
+import NewProfileSetup from '@/components/NewProfileSetup'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -24,9 +26,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-      <p>Welcome, {user.email}!</p>
-    </div>
+    <RequireAuth>
+      <NewProfileSetup />
+    </RequireAuth>
   )
 } 

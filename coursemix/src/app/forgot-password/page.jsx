@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import AnimatedBadger from '@/components/AnimatedBadger'
+import Spinner from '@/components/Spinner'
 
 export default function ForgotPassword() {
   const router = useRouter()
@@ -120,6 +121,10 @@ export default function ForgotPassword() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (loading) {
+    return <Spinner />;
   }
 
   return (
