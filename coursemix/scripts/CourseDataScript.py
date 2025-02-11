@@ -4,14 +4,30 @@ import json
 from datetime import datetime
 from supabase import create_client
 import re
+import os
+from dotenv import load_dotenv
+import sys
 
-# Your Supabase credentials
-SUPABASE_URL = 'https://gufzwtbllwjbqwojakee.supabase.co'
-SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1Znp3dGJsbHdqYnF3b2pha2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgxMTM3NjAsImV4cCI6MjA1MzY4OTc2MH0.n5c5zsVjObPjB3w4ewJDl8cWKr6JaN8TSqYdO6Of2tw"
+# Load environment variables from .env.local
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env.local')
+if not load_dotenv(env_path):
+    print("Error: Could not load .env.local file")
+    sys.exit(1)
 
+# Get Supabase credentials from environment variables
+SUPABASE_URL = os.getenv('NEXT_PUBLIC_SUPABASE_URL')
+SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')  # Using service role key for database operations
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    print("Error: Required environment variables NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY not found")
+    sys.exit(1)
 
 # Initialize Supabase client
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+try:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+except Exception as e:
+    print(f"Error initializing Supabase client: {str(e)}")
+    sys.exit(1)
 
 def extract_program_code(url):
     return url.split('/')[-1].replace('.html', '').upper()
