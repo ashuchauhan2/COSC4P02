@@ -37,12 +37,18 @@ export default function SignIn() {
     setError(null)
 
     try {
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      console.log('Attempting sign in for:', email)
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (signInError) throw signInError
+      if (signInError) {
+        console.error('Sign in error:', signInError)
+        throw signInError
+      }
+
+      console.log('Sign in successful:', data)
 
       // Save credentials if "Remember Me" is checked
       if (rememberMe) {
@@ -55,8 +61,34 @@ export default function SignIn() {
         localStorage.removeItem('rememberMe')
       }
 
-      // Redirect to dashboard
-      router.push('/protected/dashboard')
+      // Check if user has completed profile setup
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', data.user.id)  // Use user_id to find the profile
+        .single();
+
+      console.log('Profile check result:', { profile, error: profileError });
+
+      if (profileError) {
+        if (profileError.code === 'PGRST116') {  // Record not found
+          console.log('No profile found, redirecting to profile setup');
+          router.push('/protected/profile-setup');
+          return;
+        }
+        console.error('Error checking profile:', profileError);
+        throw profileError;
+      }
+
+      // Redirect based on profile setup status
+      if (!profile || !profile.is_profile_setup) {
+        console.log('Profile incomplete, redirecting to profile setup');
+        router.push('/protected/profile-setup');
+      } else {
+        console.log('Profile complete, redirecting to dashboard');
+        router.push('/protected/dashboard');
+      }
+      
       router.refresh()
     } catch (error) {
       console.error('Sign in error:', error)
