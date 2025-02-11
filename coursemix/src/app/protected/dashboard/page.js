@@ -15,30 +15,40 @@ export default function Dashboard() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.push('/signin')
-        return
-      }
-      setUser(session.user)
-      // console.log('User ID:', session.user.id) // Debug log
-      
-      // Fetch user profile from user_profiles table
-      const { data: profileData, error } = await supabase
-        .from('user_profiles')
-        .select('*')  // Let's select all fields to see what we get
-        .eq('user_id', session.user.id)
-        .single()
-      
-      console.log('Profile Data:', profileData) // Debug log
-      console.log('Profile Error:', error)      // Debug log
-      
-      if (!error && profileData) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          router.push('/signin')
+          return
+        }
+        setUser(session.user)
+        
+        // Fetch user profile from user_profiles table
+        const { data: profileData, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single()
+        
+        if (error) {
+          if (error.code === 'PGRST116') { // Record not found
+            router.push('/protected/profile-setup')
+            return
+          }
+          throw error
+        }
+
+        if (!profileData || profileData.is_profile_setup !== true) {
+          router.push('/protected/profile-setup')
+          return
+        }
+
         setProfile(profileData)
-      } else {
-        console.log('No profile found or error occurred')
+        setLoading(false)
+      } catch (error) {
+        console.error('Error in dashboard auth check:', error)
+        router.push('/signin')
       }
-      setLoading(false)
     }
 
     checkAuth()

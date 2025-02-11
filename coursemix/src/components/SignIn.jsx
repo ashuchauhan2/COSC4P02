@@ -61,11 +61,11 @@ export default function SignIn() {
         localStorage.removeItem('rememberMe')
       }
 
-      // Check if user has completed profile setup
+      // Check if user has a profile and if it's setup
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
-        .select('*')
-        .eq('user_id', data.user.id)  // Use user_id to find the profile
+        .select('is_profile_setup')
+        .eq('user_id', data.user.id)
         .single();
 
       console.log('Profile check result:', { profile, error: profileError });
@@ -76,12 +76,11 @@ export default function SignIn() {
           router.push('/protected/profile-setup');
           return;
         }
-        console.error('Error checking profile:', profileError);
         throw profileError;
       }
 
       // Redirect based on profile setup status
-      if (!profile || !profile.is_profile_setup) {
+      if (!profile || profile.is_profile_setup !== true) {
         console.log('Profile incomplete, redirecting to profile setup');
         router.push('/protected/profile-setup');
       } else {
