@@ -115,6 +115,7 @@ export default function Register() {
         body: JSON.stringify({
           email: formData.email,
           code: verificationCode,
+          password: formData.password,
         }),
       });
 

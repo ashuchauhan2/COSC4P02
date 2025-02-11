@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -8,7 +9,7 @@ const supabase = createClient(
 
 export async function POST(req) {
   try {
-    const { email, code } = await req.json();
+    const { email, code, password } = await req.json();
 
     // Check verification code
     const { data: codes, error: fetchError } = await supabase
@@ -23,11 +24,17 @@ export async function POST(req) {
     if (fetchError) throw fetchError;
     if (!codes) throw new Error('Invalid or expired code');
 
-    // Create the user in auth.users
+    // Verify the password matches
+    const isValidPassword = await bcrypt.compare(password, codes.password);
+    if (!isValidPassword) {
+      throw new Error('Invalid password');
+    }
+
+    // Create the user in auth.users with the original password
     const { data: authData, error: signUpError } = await supabase.auth.admin.createUser({
       email: email,
-      password: codes.password,
-      email_confirm: true // Mark as email confirmed
+      password: password, // Use the original password for auth.users
+      email_confirm: true
     });
 
     if (signUpError) throw signUpError;

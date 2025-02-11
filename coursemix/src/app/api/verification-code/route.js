@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(
@@ -21,14 +22,18 @@ export async function POST(req) {
       throw new Error('An account with this email already exists');
     }
 
-    // Store the verification code and password temporarily
+    // Hash the password before storing
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Store the verification code and hashed password temporarily
     const { error: storeError } = await supabase
       .from('verification_codes')
       .insert([
         {
           email,
           code,
-          password, // Store password temporarily
+          password: hashedPassword, // Store hashed password
           expires_at: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
           used: false
         }
