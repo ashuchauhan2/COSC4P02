@@ -97,10 +97,6 @@ export default function Navbar() {
     }
   };
 
-  if (loading) {
-    return <Spinner />;
-  }
-
   return (
     <nav className="bg-white border-b border-gray-200">
       <div className="container mx-auto px-4">
@@ -125,25 +121,25 @@ export default function Navbar() {
                   Dashboard
                 </Link>
                 <Link
-                  href="/protected/dashboard"
+                  href="/protected/course-registration"
                   className="text-gray-600 hover:text-teal-600 transition-colors px-4 py-1"
                 >
                   Course Registration
                 </Link>
                 <Link
-                  href="/protected/dashboard"
+                  href="/protected/grades"
                   className="text-gray-600 hover:text-teal-600 transition-colors px-4 py-1"
                 >
                   Grades
                 </Link>
                 <Link
-                  href="/protected/dashboard"
+                  href="/protected/course-reviews"
                   className="text-gray-600 hover:text-teal-600 transition-colors px-4 py-1"
                 >
                   Course Reviews
                 </Link>
                 <Link
-                  href="/protected/dashboard"
+                  href="/protected/profile"
                   className="text-gray-600 hover:text-teal-600 transition-colors px-4 py-1"
                 >
                   Profile
@@ -196,6 +192,34 @@ export default function Navbar() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Dashboard
+                  </Link>
+                  <Link
+                    href="/protected/course-registration"
+                    className="text-gray-600 hover:text-teal-600 transition-colors px-2 py-1"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Course Registration
+                  </Link>
+                  <Link
+                    href="/protected/grades"
+                    className="text-gray-600 hover:text-teal-600 transition-colors px-2 py-1"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Grades
+                  </Link>
+                  <Link
+                    href="/protected/course-reviews"
+                    className="text-gray-600 hover:text-teal-600 transition-colors px-2 py-1"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Course Reviews
+                  </Link>
+                  <Link
+                    href="/protected/profile"
+                    className="text-gray-600 hover:text-teal-600 transition-colors px-2 py-1"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Profile
                   </Link>
                   <Button
                     onClick={handleSignOut}
