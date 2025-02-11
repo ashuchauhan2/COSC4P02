@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';  // Use the shared client instead
 import Spinner from './Spinner';
 
 export default function NewProfileSetup() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -23,25 +22,49 @@ export default function NewProfileSetup() {
   });
 
   useEffect(() => {
-    const fetchPrograms = async () => {
+    const checkSession = async () => {
       try {
-        const { data: programsData, error } = await supabase
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        console.log('User check:', { user, error: userError });
+
+        if (userError || !user) {
+          console.log('No authenticated user found, redirecting to sign in');
+          router.push('/signin');
+          return;
+        }
+
+        // Fetch programs only if we have an authenticated user
+        const { data: programsData, error: programsError } = await supabase
           .from('programs')
           .select('id, program_name')
           .order('program_name');
 
-        if (error) throw error;
+        if (programsError) {
+          console.error('Error fetching programs:', programsError);
+          throw programsError;
+        }
+
         setPrograms(programsData);
       } catch (error) {
-        console.error('Error fetching programs:', error);
-        setError('Failed to load programs');
+        console.error('Error in session check:', error);
+        setError(error.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPrograms();
-  }, [supabase]);
+    checkSession();
+
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session);
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        router.push('/signin');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,9 +80,17 @@ export default function NewProfileSetup() {
     setError(null);
 
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
+      // Get current user and log the response
+      const { data, error: userError } = await supabase.auth.getUser();
+      console.log('Auth response:', { data, error: userError });
+
+      if (userError) {
+        throw new Error('Authentication error: ' + userError.message);
+      }
+
+      if (!data?.user) {
+        throw new Error('No user found - Please try signing out and signing in again');
+      }
 
       // Check if student number already exists
       const { data: existingStudent } = await supabase
@@ -78,17 +109,27 @@ export default function NewProfileSetup() {
         .from('user_profiles')
         .insert([
           {
-            user_id: user.id,
+            user_id: data.user.id,
             first_name: formData.firstName,
             last_name: formData.lastName,
             student_number: formData.studentNumber,
-            program_id: formData.programId,
+            program_id: parseInt(formData.programId),
             target_average: parseInt(formData.targetAverage),
             is_profile_setup: true
           }
         ]);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Error inserting profile:', insertError);
+        if (insertError.code === '23503') {  // Foreign key violation
+          throw new Error('Invalid program selected. Please try again.');
+        } else if (insertError.code === '23505') {  // Unique constraint violation
+          throw new Error('A profile with this student number already exists.');
+        }
+        throw insertError;
+      }
+
+      console.log('Profile created successfully');
 
       // Redirect to dashboard
       router.push('/protected/dashboard');
@@ -105,10 +146,10 @@ export default function NewProfileSetup() {
   if (loading) return <Spinner />;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-800">
             Complete Your Profile
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
@@ -117,12 +158,12 @@ export default function NewProfileSetup() {
         </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md" role="alert">
             <span className="block sm:inline">{error}</span>
           </div>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6 bg-white py-8 px-4 shadow-sm rounded-lg sm:px-10 border border-gray-200" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div className="mb-4">
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">First Name</label>
@@ -131,7 +172,7 @@ export default function NewProfileSetup() {
                 name="firstName"
                 type="text"
                 required
-                className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded relative block w-full px-3 py-2 h-11 bg-gray-50 border-gray-200 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:z-10 sm:text-sm"
                 value={formData.firstName}
                 onChange={handleChange}
               />
@@ -144,7 +185,7 @@ export default function NewProfileSetup() {
                 name="lastName"
                 type="text"
                 required
-                className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded relative block w-full px-3 py-2 h-11 bg-gray-50 border-gray-200 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:z-10 sm:text-sm"
                 value={formData.lastName}
                 onChange={handleChange}
               />
@@ -159,7 +200,7 @@ export default function NewProfileSetup() {
                 required
                 pattern="[0-9]{7}"
                 title="Student number must be exactly 7 digits"
-                className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded relative block w-full px-3 py-2 h-11 bg-gray-50 border-gray-200 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:z-10 sm:text-sm"
                 value={formData.studentNumber}
                 onChange={handleChange}
               />
@@ -171,7 +212,7 @@ export default function NewProfileSetup() {
                 id="programId"
                 name="programId"
                 required
-                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 block w-full py-2 px-3 h-11 bg-gray-50 border-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                 value={formData.programId}
                 onChange={handleChange}
               >
@@ -193,7 +234,7 @@ export default function NewProfileSetup() {
                 required
                 min="0"
                 max="100"
-                className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded relative block w-full px-3 py-2 h-11 bg-gray-50 border-gray-200 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:z-10 sm:text-sm"
                 value={formData.targetAverage}
                 onChange={handleChange}
               />
@@ -204,7 +245,7 @@ export default function NewProfileSetup() {
             <button
               type="submit"
               disabled={submitting}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
+              className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:bg-teal-400"
             >
               {submitting ? 'Saving...' : 'Complete Profile Setup'}
             </button>

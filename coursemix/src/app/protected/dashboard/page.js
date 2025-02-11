@@ -3,31 +3,80 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import RequireAuth from '@/components/RequireAuth'
-import NewProfileSetup from '@/components/NewProfileSetup'
+import TimeTable from '@/components/TimeTable'
+import DegreeProgress from '@/components/DegreeProgressBar'
+import Spinner from '@/components/Spinner'
 
 export default function Dashboard() {
   const router = useRouter()
   const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          router.push('/signin')
+          return
+        }
+        setUser(session.user)
+        
+        // Fetch user profile from user_profiles table
+        const { data: profileData, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single()
+        
+        if (error) {
+          if (error.code === 'PGRST116') { // Record not found
+            router.push('/protected/profile-setup')
+            return
+          }
+          throw error
+        }
+
+        if (!profileData || profileData.is_profile_setup !== true) {
+          router.push('/protected/profile-setup')
+          return
+        }
+
+        setProfile(profileData)
+        setLoading(false)
+      } catch (error) {
+        console.error('Error in dashboard auth check:', error)
         router.push('/signin')
       }
-      setUser(session.user)
     }
 
     checkAuth()
   }, [router])
 
-  if (!user) {
-    return <div>Loading...</div>
+  if (loading) {
+    return (
+      <Spinner />
+    )
   }
 
   return (
     <RequireAuth>
-      <NewProfileSetup />
+      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+            Welcome to your Dashboard, {profile?.first_name || 'Student'}
+          </h1>
+          
+          <div className="mb-8">
+            <TimeTable />
+          </div>
+          
+          <div className="mt-12">
+            <DegreeProgress />
+          </div>
+        </div>
+      </div>
     </RequireAuth>
   )
 } 
