@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# CourseMix 📚
 
-## Getting Started
+CourseMix is a modern web application designed to streamline the course registration process for students. It provides an intuitive interface for course selection, schedule planning, and profile management.
 
-First, run the development server:
+## 🌟 Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **User Authentication & Authorization**
+  - Secure sign-in and registration system
+  - Email verification for new accounts
+  - Protected routes for authenticated users
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Profile Management**
+  - Customizable user profiles
+  - New profile setup wizard for first-time users
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- **Course Registration**
+  - Interactive course selection interface
+  - Real-time course availability updates
+  - Visual timetable representation
+  - Conflict detection for course schedules
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Dashboard**
+  - Personalized user dashboard
+  - Overview of registered courses
+  - Quick access to important features
 
-## Learn More
+## 🚀 Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+- **Frontend**
+  - Next.js 15.1
+  - React 19
+  - Tailwind CSS
+  - Shadcn UI Components
+  - Lucide React Icons
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Backend**
+  - Next.js API Routes
+  - Supabase (Authentication & Database)
+  - Resend (Email Services)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Development Tools**
+  - ESLint
+  - PostCSS
+  - Python Scripts for Data Management
 
-## Deploy on Vercel
+## 📋 Prerequisites
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Node.js (v18 or higher)
+- npm or yarn
+- Python 3.x (for running data scripts)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠️ Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/coursemix.git
+   cd coursemix
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   Create a `.env.local` file in the root directory with the following variables:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   RESEND_API_KEY=your_resend_api_key
+   ```
+
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 🚀 Deployment
+
+1. Build the application:
+   ```bash
+   npm run build
+   ```
+
+2. Start the production server:
+   ```bash
+   npm start
+   ```
+
+## 📝 Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 👥 Authors
+
+- Your Name - Initial work
+
+## 🙏 Acknowledgments
+
+- Thanks to all contributors who have helped shape CourseMix
+- Special thanks to the open-source community for the amazing tools and libraries
