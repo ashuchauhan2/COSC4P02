@@ -15,72 +15,93 @@ export default function Navbar() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setLoading(true);
-        try {
-          if (session?.user) {
-            // Check if user is verified before setting user state
-            const { data: verificationData } = await supabase
-              .from("user_verification")
-              .select("is_verified")
-              .eq("email", session.user.email)
-              .single();
+    let mounted = true;
 
-            if (verificationData?.is_verified) {
-              setUser(session.user);
-              if (event === "SIGNED_IN") {
-                router.push("/protected/dashboard");
-              }
-            } else {
-              // Sign out if not verified
-              await supabase.auth.signOut();
-              setUser(null);
-            }
-          } else {
-            setUser(null);
-            if (event === "SIGNED_OUT") {
-              router.push("/");
-            }
-          }
-        } finally {
-          setLoading(false);
-        }
-      }
-    );
-
-    // Initial session check
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setLoading(true);
+    const checkSession = async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+
         if (session?.user) {
-          // Check verification status on initial load
           const { data: verificationData } = await supabase
             .from("user_verification")
             .select("is_verified")
             .eq("email", session.user.email)
             .single();
 
-          if (!verificationData?.is_verified) {
+          if (verificationData?.is_verified) {
+            setUser(session.user);
+          } else {
             await supabase.auth.signOut();
             setUser(null);
-          } else {
+          }
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Session check error:', error);
+        setUser(null);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    checkSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      setLoading(true);
+
+      try {
+        if (session?.user) {
+          const { data: verificationData } = await supabase
+            .from("user_verification")
+            .select("is_verified")
+            .eq("email", session.user.email)
+            .single();
+
+          if (verificationData?.is_verified) {
             setUser(session.user);
+            if (event === "SIGNED_IN") {
+              router.push("/protected/dashboard");
+            }
+          } else {
+            await supabase.auth.signOut();
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+          if (event === "SIGNED_OUT") {
+            router.push("/");
           }
         }
+      } catch (error) {
+        console.error('Auth state change error:', error);
+        setUser(null);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     });
 
     return () => {
+      mounted = false;
       authListener?.subscription?.unsubscribe();
     };
   }, [router]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setIsMenuOpen(false);
+    setLoading(true);
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      setLoading(false);
+      setIsMenuOpen(false);
+    }
   };
 
   const toggleMenu = () => {
