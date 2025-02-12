@@ -139,10 +139,6 @@ export default function Dashboard() {
     fetchEnrolledCount();
   }, []);
 
-  if (loading) {
-    return <Spinner />
-  }
-
   return (
     <RequireAuth>
       <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
