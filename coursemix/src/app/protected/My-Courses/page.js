@@ -95,65 +95,115 @@ const MyCoursesPage = () => {
                 You are not enrolled in any courses.
               </div>
             ) : (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Course Code
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Days
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Time
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Duration
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Instructor
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+              <>
+                {/* Table for medium and large screens */}
+                <div className="hidden md:block">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Course Code
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Type
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Days
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Time
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Duration
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Instructor
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {enrolledCourses.map((enrollment) => (
+                        <tr key={enrollment.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {enrollment.courses.course_code}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {enrollment.courses.class_type}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {enrollment.courses.course_days}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {enrollment.courses.class_time}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {enrollment.courses.course_duration}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {enrollment.courses.instructor}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <button
+                              onClick={() => handleDrop(enrollment.id, enrollment.course_id)}
+                              className="text-red-600 hover:text-red-800 font-medium"
+                            >
+                              Drop
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Card layout for mobile screens */}
+                <div className="md:hidden">
                   {enrolledCourses.map((enrollment) => (
-                    <tr key={enrollment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {enrollment.courses.course_code}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {enrollment.courses.class_type}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {enrollment.courses.course_days}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {enrollment.courses.class_time}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {enrollment.courses.course_duration}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {enrollment.courses.instructor}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <div 
+                      key={enrollment.id} 
+                      className="border-b border-gray-200 p-4 space-y-3"
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-900">
+                          {enrollment.courses.course_code}
+                        </span>
                         <button
                           onClick={() => handleDrop(enrollment.id, enrollment.course_id)}
                           className="text-red-600 hover:text-red-800 font-medium"
                         >
                           Drop
                         </button>
-                      </td>
-                    </tr>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm text-gray-500">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Type:</span>
+                          <span>{enrollment.courses.class_type}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Days:</span>
+                          <span>{enrollment.courses.course_days}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Time:</span>
+                          <span>{enrollment.courses.class_time}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Duration:</span>
+                          <span>{enrollment.courses.course_duration}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Instructor:</span>
+                          <span>{enrollment.courses.instructor}</span>
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </>
             )}
           </div>
         </div>

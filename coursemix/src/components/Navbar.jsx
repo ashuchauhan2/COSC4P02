@@ -184,7 +184,7 @@ export default function Navbar() {
                         Register
                       </Link>
                       <Link
-                        href="/protected/My-Courses"
+                        href="/protected/my-courses"
                         className="block px-4 py-2 hover:bg-gray-100 text-gray-600"
                         onClick={() => setIsDropdownOpen(false)}
                       >
@@ -261,37 +261,43 @@ export default function Navbar() {
                     Dashboard
                   </Link>
                   <div className="relative dropdown-container">
-                  <button
-                    onClick={toggleDropdown}
-                    className="flex items-center text-gray-600 hover:text-teal-600 transition-colors px-4 py-1 gap-1"
-                  >
-                    Course Registration
-                    <ChevronDown
-                      size={16}
-                      className={`transition-transform ${
-                        isDropdownOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-                  {isDropdownOpen && (
-                    <div className="absolute bg-white shadow-md rounded mt-2 w-48 py-1 z-50">
-                      <Link
-                        href="/protected/course-registration"
-                        className="block px-4 py-2 hover:bg-gray-100 text-gray-600"
-                        onClick={() => setIsDropdownOpen(false)}
-                      >
-                        Register
-                      </Link>
-                      <Link
-                        href="/protected/My-Courses"
-                        className="block px-4 py-2 hover:bg-gray-100 text-gray-600"
-                        onClick={() => setIsDropdownOpen(false)}
-                      >
-                        My Courses
-                      </Link>
-                    </div>
-                  )}
-                </div>
+                    <button
+                      onClick={toggleDropdown}
+                      className="flex items-center text-gray-600 hover:text-teal-600 transition-colors px-2 py-1 gap-1 w-full text-left"
+                    >
+                      Course Registration
+                      <ChevronDown
+                        size={16}
+                        className={`transition-transform ${
+                          isDropdownOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+                    {isDropdownOpen && (
+                      <div className="relative bg-white shadow-md rounded mt-2 w-48 py-1">
+                        <Link
+                          href="/protected/course-registration"
+                          className="block px-4 py-2 hover:bg-gray-100 text-gray-600"
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            setIsMenuOpen(false);
+                          }}
+                        >
+                          Register
+                        </Link>
+                        <Link
+                          href="/protected/my-courses"
+                          className="block px-4 py-2 hover:bg-gray-100 text-gray-600"
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            setIsMenuOpen(false);
+                          }}
+                        >
+                          My Courses
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                   <Link
                     href="/protected/grades"
                     className="text-gray-600 hover:text-teal-600 transition-colors px-2 py-1"

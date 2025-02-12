@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 // Constants for the timetable
-const TIMETABLE_START = 8; // 8:00 AM
-const TIMETABLE_END = 22;  // 10:00 PM
+const TIMETABLE_START = 7; // Change to 7:00 AM to show one hour before
+const TIMETABLE_END = 23; // Keep end time the same
 const HOURS_COUNT = TIMETABLE_END - TIMETABLE_START;
 
 const dayLetterMapping = {
-  'Monday': 'M',
-  'Tuesday': 'T',
-  'Wednesday': 'W',
-  'Thursday': 'R',
-  'Friday': 'F'
+  Monday: "M",
+  Tuesday: "T",
+  Wednesday: "W",
+  Thursday: "R",
+  Friday: "F",
 };
 
 const TimeTable = () => {
@@ -23,55 +23,59 @@ const TimeTable = () => {
     const date = new Date();
     date.setHours(hour, minute, 0, 0);
     return date.toLocaleTimeString([], {
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZone: 'America/Toronto'
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: "America/Toronto",
     });
   };
 
   const parseTime = (timeStr) => {
     if (!timeStr) return null;
-    const normalized = timeStr.replace(/:/g, '');
+    const normalized = timeStr.replace(/:/g, "");
     let [start, end] = timeStr
-      .replace(/:/g, '')
-      .split('-')
-      .map(part => part.trim());
-    
+      .replace(/:/g, "")
+      .split("-")
+      .map((part) => part.trim());
+
     // Function to parse 3 or 4 digit time
     const parseTimeComponent = (time) => {
       // For 3 digits (e.g., "900"), take first digit as hour and last two as minutes
       if (time.length === 3) {
         return {
           hour: parseInt(time.substring(0, 1), 10),
-          minute: parseInt(time.substring(1), 10)
+          minute: parseInt(time.substring(1), 10),
         };
       }
       // For 4 digits (e.g., "0900" or "1430"), take first two digits as hour and last two as minutes
       else if (time.length === 4) {
         return {
           hour: parseInt(time.substring(0, 2), 10),
-          minute: parseInt(time.substring(2), 10)
+          minute: parseInt(time.substring(2), 10),
         };
       }
       // Handle unexpected formats
       return { hour: 0, minute: 0 };
     };
-    
+
     const startTime = parseTimeComponent(start);
     const endTime = parseTimeComponent(end);
-    
+
     return {
       startHour: startTime.hour,
       startMinute: startTime.minute,
       endHour: endTime.hour,
-      endMinute: endTime.minute
+      endMinute: endTime.minute,
     };
   };
 
   const isCourseActive = (course) => {
-    const torontoNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Toronto' }));
-    const formattedToday = torontoNow.toLocaleDateString('sv-SE');
-    return formattedToday >= course.start_date && formattedToday <= course.end_date;
+    const torontoNow = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "America/Toronto" })
+    );
+    const formattedToday = torontoNow.toLocaleDateString("sv-SE");
+    return (
+      formattedToday >= course.start_date && formattedToday <= course.end_date
+    );
   };
 
   // Calculate position and height for course blocks
@@ -81,51 +85,65 @@ const TimeTable = () => {
       // Ensure the hour is between 0 and 23
       return hour >= 0 && hour <= 23 ? hour : 0;
     };
-    
+
     // Convert start and end hours to 24-hour format
     const startHour = normalizeHour(timeObj.startHour);
     const endHour = normalizeHour(timeObj.endHour);
-    
+
     // Calculate minutes since timetable start (8 AM)
     // For debugging
-    console.log('Start Hour:', startHour, 'End Hour:', endHour);
-    
+    console.log("Start Hour:", startHour, "End Hour:", endHour);
+
     const startMinutesSinceTimetableStart = Math.max(
       0,
-      ((startHour - TIMETABLE_START) * 60) + timeObj.startMinute
+      (startHour - TIMETABLE_START) * 60 + timeObj.startMinute
     );
-    
+
     const endMinutesSinceTimetableStart = Math.max(
       0,
-      ((endHour - TIMETABLE_START) * 60) + timeObj.endMinute
+      (endHour - TIMETABLE_START) * 60 + timeObj.endMinute
     );
-    
-    const totalMinutesInTimetable = HOURS_COUNT * 60;
-    
-    // For debugging
-    console.log('Start minutes since timetable start:', startMinutesSinceTimetableStart);
-    console.log('End minutes since timetable start:', endMinutesSinceTimetableStart);
-    console.log('Total minutes in timetable:', totalMinutesInTimetable);
 
-    const top = (startMinutesSinceTimetableStart / totalMinutesInTimetable) * 100;
-    const height = ((endMinutesSinceTimetableStart - startMinutesSinceTimetableStart) / totalMinutesInTimetable) * 100;
-    
+    const totalMinutesInTimetable = HOURS_COUNT * 60;
+
     // For debugging
-    console.log('Calculated position:', { top, height });
-    
+    console.log(
+      "Start minutes since timetable start:",
+      startMinutesSinceTimetableStart
+    );
+    console.log(
+      "End minutes since timetable start:",
+      endMinutesSinceTimetableStart
+    );
+    console.log("Total minutes in timetable:", totalMinutesInTimetable);
+
+    const top =
+      (startMinutesSinceTimetableStart / totalMinutesInTimetable) * 100;
+    const height =
+      ((endMinutesSinceTimetableStart - startMinutesSinceTimetableStart) /
+        totalMinutesInTimetable) *
+      100;
+
+    // For debugging
+    console.log("Calculated position:", { top, height });
+
     return { top, height };
   };
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
         if (userError) throw userError;
         if (!user) throw new Error("User not logged in");
 
         const { data: enrollments, error: enrollmentsError } = await supabase
-          .from('enrollments')
-          .select(`
+          .from("enrollments")
+          .select(
+            `
             id,
             course_id,
             courses (
@@ -138,22 +156,23 @@ const TimeTable = () => {
               end_date,
               instructor
             )
-          `)
-          .eq('user_id', user.id)
-          .eq('status', 'enrolled');
+          `
+          )
+          .eq("user_id", user.id)
+          .eq("status", "enrolled");
 
         if (enrollmentsError) throw enrollmentsError;
 
         const fetchedCourses = enrollments
-          .filter(enrollment => enrollment.courses)
-          .map(enrollment => ({
+          .filter((enrollment) => enrollment.courses)
+          .map((enrollment) => ({
             ...enrollment.courses,
-            enrollment_id: enrollment.id
+            enrollment_id: enrollment.id,
           }));
 
         setCourses(fetchedCourses);
       } catch (err) {
-        console.error('Error fetching courses:', err);
+        console.error("Error fetching courses:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -163,34 +182,40 @@ const TimeTable = () => {
     fetchCourses();
   }, []);
 
-  if (loading) return <div className="text-center p-4">Loading schedule...</div>;
-  if (error) return <div className="text-center text-red-500 p-4">Error: {error}</div>;
+  if (loading)
+    return <div className="text-center p-4">Loading schedule...</div>;
+  if (error)
+    return <div className="text-center text-red-500 p-4">Error: {error}</div>;
 
   const activeCourses = courses.filter(isCourseActive);
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
   return (
     <div className="w-full h-[calc(100vh-8rem)] max-w-5xl mx-auto p-4 bg-white rounded-lg shadow-lg">
       <div className="flex flex-col h-full">
         <div className="grid grid-cols-6 flex-grow">
           {/* Time Labels */}
-          <div className="relative border-r border-gray-300">
+          <div className="relative border-r border-gray-200">
             <div className="h-12 border-b border-gray-200 bg-gray-50"></div>
             <div className="relative h-[calc(100%-3rem)]">
               {Array.from({ length: HOURS_COUNT }, (_, i) => {
                 const hour = TIMETABLE_START + i;
+                // Skip rendering the 7am label
+                if (hour === 7) return null;
                 return (
                   <div
                     key={i}
-                    className="absolute w-full text-xs text-gray-600 font-semibold pr-2 flex items-center justify-end"
+                    className={`absolute w-full text-xs font-semibold pr-2 flex items-center justify-end ${
+                      hour < 8 ? "text-gray-400" : "text-gray-600"
+                    }`}
                     style={{
                       top: `${(i / HOURS_COUNT) * 100}%`,
                       height: `${(1 / HOURS_COUNT) * 100}%`,
-                      transform: 'translateY(0)'
+                      transform: "translateY(-50%)",
                     }}
                   >
                     {formatTime(hour, 0)}
-                    <div className="absolute right-0 w-2 h-[1px] bg-gray-300" />
+                    <div className="absolute right-0 w-2 h-[1px] bg-gray-500" />
                   </div>
                 );
               })}
@@ -198,9 +223,9 @@ const TimeTable = () => {
           </div>
 
           {/* Day Columns */}
-          {days.map(day => {
+          {days.map((day) => {
             const dayLetter = dayLetterMapping[day];
-            const coursesForDay = activeCourses.filter(course => 
+            const coursesForDay = activeCourses.filter((course) =>
               course.course_days.includes(dayLetter)
             );
 
@@ -208,7 +233,9 @@ const TimeTable = () => {
               <div key={day} className="relative border-r border-gray-200">
                 {/* Day Header */}
                 <div className="h-12 border-b border-gray-200 bg-gray-50 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-gray-700">{day}</span>
+                  <span className="text-sm font-semibold text-gray-700">
+                    {day}
+                  </span>
                 </div>
 
                 {/* Course Container */}
@@ -217,7 +244,11 @@ const TimeTable = () => {
                   {Array.from({ length: HOURS_COUNT }, (_, i) => (
                     <div key={`grid-${i}`}>
                       <div
-                        className="absolute w-full border-t border-gray-200"
+                        className={`absolute w-full border-t ${
+                          TIMETABLE_START + i === 8
+                            ? "border-gray-300"
+                            : "border-gray-200"
+                        }`}
                         style={{ top: `${(i / HOURS_COUNT) * 100}%` }}
                       />
                       <div
@@ -226,22 +257,48 @@ const TimeTable = () => {
                       />
                     </div>
                   ))}
-                  
+
                   {/* Add final border line at bottom */}
                   <div
-                    className="absolute w-full border-t border-gray-200"
-                    style={{ bottom: '0' }}
+                    className="absolute w-full border-t border-gray-300"
+                    style={{ bottom: "0" }}
                   />
 
+                  {/* Pre-8am shaded area with "No Classes" text */}
+                  <div
+                    className="absolute w-full bg-gray-50/50 flex items-center justify-center"
+                    style={{
+                      top: 0,
+                      height: `${(1 / HOURS_COUNT) * 100}%`,
+                    }}
+                  >
+                    <span className="text-[10px] text-gray-600 font-bold">
+                      <p className="">No Classes</p>
+                    </span>
+                  </div>
+
+                  {/* Post-10pm shaded area with "No Classes" text */}
+                  <div
+                    className="absolute w-full bg-gray-50/50 flex items-center justify-center"
+                    style={{
+                      bottom: 0,
+                      height: `${(1 / HOURS_COUNT) * 100}%`,
+                    }}
+                  >
+                    <span className="text-[10px] text-gray-600 font-bold">
+                      <p className="">No Classes</p>
+                    </span>
+                  </div>
+
                   {/* Course Blocks */}
-                  {coursesForDay.map(course => {
+                  {coursesForDay.map((course) => {
                     const timeObj = parseTime(course.class_time);
                     if (!timeObj) return null;
 
                     const { top, height } = calculateCoursePosition(timeObj);
-                    const colorHash = course.course_code.split('').reduce(
-                      (acc, char) => char.charCodeAt(0) + acc, 0
-                    );
+                    const colorHash = course.course_code
+                      .split("")
+                      .reduce((acc, char) => char.charCodeAt(0) + acc, 0);
                     const hue = colorHash % 360;
 
                     return (
@@ -253,7 +310,7 @@ const TimeTable = () => {
                           top: `${top}%`,
                           height: `${height}%`,
                           backgroundColor: `hsla(${hue}, 70%, 85%, 0.9)`,
-                          border: `1px solid hsla(${hue}, 70%, 75%, 1)`
+                          border: `1px solid hsla(${hue}, 70%, 75%, 1)`,
                         }}
                       >
                         <div className="p-1.5 h-full flex flex-col">
@@ -279,16 +336,22 @@ const TimeTable = () => {
         </div>
 
         {/* Online Courses Section */}
-        {activeCourses.some(course => !course.class_time && course.class_type === 'ASY') && (
+        {activeCourses.some(
+          (course) => !course.class_time && course.class_type === "ASY"
+        ) && (
           <div className="mt-4 border-t border-gray-200 pt-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Online Courses</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              Online Courses
+            </h3>
             <div className="flex flex-wrap gap-2">
               {activeCourses
-                .filter(course => !course.class_time && course.class_type === 'ASY')
-                .map(course => {
-                  const colorHash = course.course_code.split('').reduce(
-                    (acc, char) => char.charCodeAt(0) + acc, 0
-                  );
+                .filter(
+                  (course) => !course.class_time && course.class_type === "ASY"
+                )
+                .map((course) => {
+                  const colorHash = course.course_code
+                    .split("")
+                    .reduce((acc, char) => char.charCodeAt(0) + acc, 0);
                   const hue = colorHash % 360;
 
                   return (
@@ -298,7 +361,7 @@ const TimeTable = () => {
                                transition-transform hover:scale-[1.02] cursor-pointer"
                       style={{
                         backgroundColor: `hsla(${hue}, 70%, 85%, 0.9)`,
-                        border: `1px solid hsla(${hue}, 70%, 75%, 1)`
+                        border: `1px solid hsla(${hue}, 70%, 75%, 1)`,
                       }}
                     >
                       <div className="font-bold text-sm text-gray-800">
