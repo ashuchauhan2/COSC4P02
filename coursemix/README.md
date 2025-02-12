@@ -130,7 +130,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - The open-source community for providing excellent tools and libraries
-- University of Manitoba Computer Science Department
+- Brock University <3
 - All contributors who have helped improve CourseMix
 
 ---
