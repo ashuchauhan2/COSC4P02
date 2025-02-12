@@ -210,7 +210,18 @@ const CourseRegistrationPage = () => {
   };
 
   const filteredCourses = courses.filter(course => {
-    const matchesSearch = course.course_code.toLowerCase().includes(searchTerm.toLowerCase());
+    // Split the search into prefix (first 4 chars) and rest
+    const searchPrefix = searchTerm.slice(0, 4).toLowerCase();
+    const searchRest = searchTerm.slice(4).toLowerCase().replace(/\s+/g, '');
+    
+    // Split course code into prefix and rest
+    const coursePrefix = course.course_code.slice(0, 4).toLowerCase();
+    const courseRest = course.course_code.slice(4).toLowerCase().replace(/\s+/g, '');
+    
+    // Match prefix exactly and rest flexibly
+    const matchesSearch = coursePrefix.startsWith(searchPrefix) && 
+      (searchRest === '' || courseRest.includes(searchRest));
+      
     const matchesDuration = !selectedDuration || course.course_duration === parseInt(selectedDuration);
     const matchesType = !selectedType || course.class_type === selectedType;
     return matchesSearch && matchesDuration && matchesType;
