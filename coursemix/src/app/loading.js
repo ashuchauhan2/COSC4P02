@@ -1,6 +1,6 @@
 'use client';
 
-import PageTransitionSpinner from '@/components/PageTransitionSpinner';
+import Spinner from '@/components/Spinner';
 
 export default function Loading() {
   return <Spinner />;
