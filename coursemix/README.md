@@ -1,124 +1,138 @@
 # CourseMix 📚
 
-CourseMix is a modern web application designed to streamline the course registration process for students. It provides an intuitive interface for course selection, schedule planning, and profile management.
+CourseMix is a modern web application that revolutionizes the course registration experience for university students. Built with cutting-edge technology, it offers a seamless interface for course selection, schedule planning, and academic profile management.
 
-## 🌟 Features
+## ✨ Key Features
 
-- **User Authentication & Authorization**
-  - Secure sign-in and registration system
-  - Email verification for new accounts
-  - Protected routes for authenticated users
+### 🔐 Authentication
+- Secure login and registration
+- Email verification system
+- Role-based access control
+- Protected routes and API endpoints
 
-- **Profile Management**
-  - Customizable user profiles
-  - New profile setup wizard for first-time users
+### 📋 Course Management
+- Intuitive course search and selection
+- Real-time availability tracking
+- Smart schedule conflict detection
+- Visual timetable planner
+- Waitlist management
 
-- **Course Registration**
-  - Interactive course selection interface
-  - Real-time course availability updates
-  - Visual timetable representation
-  - Conflict detection for course schedules
+### 👤 Student Profile
+- Personalized dashboard
+- Academic progress tracking
+- Course history viewer
+- Profile customization options
 
-- **Dashboard**
-  - Personalized user dashboard
-  - Overview of registered courses
-  - Quick access to important features
+### 📊 Analytics
+- Schedule optimization suggestions
+- Course load analysis
+- Prerequisite tracking
+- Grade distribution insights
 
-## 🚀 Tech Stack
+## 🛠️ Technology Stack
 
-- **Frontend**
-  - Next.js 15.1
-  - React 19
-  - Tailwind CSS
-  - Shadcn UI Components
-  - Lucide React Icons
+### Frontend
+- **Framework:** Next.js 15.1
+- **UI Library:** React 19
+- **Styling:** Tailwind CSS
+- **Components:** Shadcn UI
+- **Icons:** Lucide React
 
-- **Backend**
-  - Next.js API Routes
-  - Supabase (Authentication & Database)
-  - Resend (Email Services)
+### Backend
+- **API:** Next.js API Routes
+- **Database:** Supabase
+- **Email Service:** Resend
+- **Authentication:** Supabase Auth
 
-- **Development Tools**
-  - ESLint
-  - PostCSS
-  - Python Scripts for Data Management
+### Development
+- **Linting:** ESLint
+- **Styling:** PostCSS
+- **Data Scripts:** Python 3.x
 
-## 📋 Prerequisites
+## 🚀 Getting Started
 
-- Node.js (v18 or higher)
+### Prerequisites
+- Node.js (v18+)
 - npm or yarn
-- Python 3.x (for running data scripts)
+- Python 3.x
 
-## 🛠️ Installation
+### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/coursemix.git
-   cd coursemix
-   ```
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/coursemix.git
+cd coursemix
+```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+2. Install dependencies
+```bash
+npm install
+```
 
-3. Set up environment variables:
-   Create a `.env.local` file in the root directory with the following variables:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   RESEND_API_KEY=your_resend_api_key
-   ```
+3. Configure environment variables
+Create a `.env.local` file:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+RESEND_API_KEY=your_resend_api_key
+```
 
-4. Run the development server:
-   ```bash
-   npm run dev
-   ```
+4. Start development server
+```bash
+npm run dev
+```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Visit [http://localhost:3000](http://localhost:3000) to view the application.
+
+## 📝 Available Scripts
+
+- `npm run dev` - Development mode
+- `npm run build` - Production build
+- `npm start` - Production server
+- `npm run lint` - Code linting
 
 ## 🚀 Deployment
 
-1. Build the application:
-   ```bash
-   npm run build
-   ```
+1. Build the application
+```bash
+npm run build
+```
 
-2. Start the production server:
-   ```bash
-   npm start
-   ```
+2. Start production server
+```bash
+npm start
+```
 
-## 📝 Scripts
+## 👥 Team Members
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
+| Name | Student ID |
+|------|------------|
+| Ashu Chauhan | 7001571 |
+| Avi Patel | 6741961 |
+| Fatima Abourida | 7119490 |
+| Jerome Uwaneme | 7141270 |
+| Olaoluwa Akanji | 6908776 |
+| Oreoluwa Akanji | 6910483 |
+| Russell Salacup | 7177884 |
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+3. Commit your changes (`git commit -m 'Add AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 👥 Authors
-
-Ashu Chauhan – 7001571 <br>
-Avi Patel – 6741961 <br>
-Fatima Abourida - 7119490<br>
-Jerome Uwaneme -7141270<br> 
-Olaoluwa Akanji - 6908776 <br>
-Oreoluwa Akanji - 6910483<br>
-Russell Salacup – 7177884 <br>
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- Thanks to all contributors who have helped shape CourseMix
-- Special thanks to the open-source community for the amazing tools and libraries
+- The open-source community for providing excellent tools and libraries
+- University of Manitoba Computer Science Department
+- All contributors who have helped improve CourseMix
+
+---
+
+Built with ❤️ by the CourseMix Team
