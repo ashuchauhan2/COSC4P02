@@ -7,6 +7,7 @@ import Spinner from '@/components/Spinner';
 import debounce from 'lodash/debounce';
 import React from 'react';
 import ErrorPopup from '@/components/ErrorPopup';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 const CourseRegistrationPage = () => {
   const [courses, setCourses] = useState([]);
@@ -18,6 +19,7 @@ const CourseRegistrationPage = () => {
   const [selectedType, setSelectedType] = useState('');
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [confirmDialog, setConfirmDialog] = useState({ show: false, message: '', courseId: null });
   const pageSize = 20;
 
   // Duration options based on the provided information
@@ -161,6 +163,90 @@ const CourseRegistrationPage = () => {
     debouncedSearch(subjectCode, selectedDuration, selectedType, 0);
   };
 
+  // Function to check for time conflicts
+  const checkTimeConflict = (course1, course2) => {
+    console.log('Checking conflict between:', {
+      course1: {
+        code: course1.course_code,
+        days: course1.course_days,
+        time: course1.class_time
+      },
+      course2: {
+        code: course2.course_code,
+        days: course2.course_days,
+        time: course2.class_time
+      }
+    });
+
+    // Parse days into arrays, handling both single characters and space-separated days
+    const getDays = (dayStr) => {
+      // If the string is empty, return empty array
+      if (!dayStr || dayStr.trim() === '') return [];
+      // Split by space and filter out empty strings
+      const days = dayStr.split(' ').filter(d => d.trim() !== '');
+      console.log('Parsed days for', dayStr, ':', days);
+      return days;
+    };
+    
+    const days1 = getDays(course1.course_days);
+    const days2 = getDays(course2.course_days);
+    
+    // Check if there are any common days
+    const hasCommonDays = days1.some(day => days2.includes(day));
+    console.log('Has common days:', hasCommonDays);
+    if (!hasCommonDays) return false;
+
+    // Parse times into minutes since midnight
+    const parseTime = (timeStr) => {
+      console.log('Parsing time:', timeStr);
+      // Remove all spaces and any trailing/leading characters
+      const cleanTimeStr = timeStr.replace(/\s+/g, '').trim();
+      
+      // Handle 3 or 4 digit time format (e.g., "800" or "1900")
+      let hours, minutes;
+      if (cleanTimeStr.length === 3) {
+        hours = parseInt(cleanTimeStr.substring(0, 1), 10);
+        minutes = parseInt(cleanTimeStr.substring(1), 10);
+      } else if (cleanTimeStr.length === 4) {
+        hours = parseInt(cleanTimeStr.substring(0, 2), 10);
+        minutes = parseInt(cleanTimeStr.substring(2), 10);
+      } else {
+        throw new Error(`Invalid time format: ${timeStr}`);
+      }
+
+      const totalMinutes = hours * 60 + minutes;
+      console.log('Converted to minutes:', totalMinutes);
+      return totalMinutes;
+    };
+
+    try {
+      // Parse time ranges, handling potential format issues
+      const times1 = course1.class_time.split('-').map(t => t.trim());
+      const times2 = course2.class_time.split('-').map(t => t.trim());
+
+      const start1 = parseTime(times1[0]);
+      const end1 = parseTime(times1[1]);
+      const start2 = parseTime(times2[0]);
+      const end2 = parseTime(times2[1]);
+
+      console.log('Time ranges in minutes:', {
+        course1: { start: start1, end: end1 },
+        course2: { start: start2, end: end2 }
+      });
+
+      // Check for time overlap
+      const hasOverlap = (start1 < end2 && start2 < end1);
+      console.log('Has time overlap:', hasOverlap);
+      return hasOverlap;
+    } catch (err) {
+      console.error('Error parsing times:', err);
+      // If there's an error parsing times, we should assume there might be a conflict
+      // to be on the safe side
+      setError('Error checking time conflict. Please verify the course times manually.');
+      return true;
+    }
+  };
+
   const handleEnroll = async (courseId) => {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -171,6 +257,12 @@ const CourseRegistrationPage = () => {
       if (!courseToEnroll) {
         throw new Error('Course not found');
       }
+
+      console.log('Attempting to enroll in course:', {
+        code: courseToEnroll.course_code,
+        days: courseToEnroll.course_days,
+        time: courseToEnroll.class_time
+      });
 
       // Check if the course is currently available
       const currentDate = new Date();
@@ -189,39 +281,59 @@ const CourseRegistrationPage = () => {
 
       if (enrolledCoursesError) throw enrolledCoursesError;
 
+      console.log('Currently enrolled courses:', enrolledCoursesData.map(c => ({
+        code: c.course_code,
+        days: c.course_days,
+        time: c.class_time
+      })));
+
       // Check for time conflicts
-      // const hasConflict = enrolledCoursesData.some(enrolledCourse => {
-      //   // Check if the days overlap
-      //   const enrolledDays = enrolledCourse.course_days.split('');
-      //   const newCourseDays = courseToEnroll.course_days.split('');
-      //   // const hasCommonDays = enrolledDays.some(day => newCourseDays.includes(day));
+      const conflictingCourse = enrolledCoursesData.find(enrolledCourse => 
+        checkTimeConflict(enrolledCourse, courseToEnroll)
+      );
 
-      //   // Parse times
-      //   const [enrolledStart, enrolledEnd] = enrolledCourse.class_time.split(' - ').map(time => {
-      //     const [hours, minutes] = time.split(':').map(Number);
-      //     return hours * 60 + minutes;
-      //   });
+      if (conflictingCourse) {
+        console.log('Found conflicting course:', {
+          code: conflictingCourse.course_code,
+          days: conflictingCourse.course_days,
+          time: conflictingCourse.class_time
+        });
+        // Show confirmation dialog
+        setConfirmDialog({
+          show: true,
+          message: `This course conflicts with ${conflictingCourse.course_code} (${conflictingCourse.course_days} ${conflictingCourse.class_time}). Do you still want to enroll?`,
+          courseId,
+          isConflict: true
+        });
+        return;
+      }
 
-      //   const [newStart, newEnd] = courseToEnroll.class_time.split(' - ').map(time => {
-      //     const [hours, minutes] = time.split(':').map(Number);
-      //     return hours * 60 + minutes;
-      //   });
+      console.log('No conflicts found, proceeding with enrollment');
+      // If no conflicts, proceed with enrollment
+      await processEnrollment(courseId);
 
-      //   // Check for time overlap
-      //   return !(enrolledEnd <= newStart || newEnd <= enrolledStart);
-      // });
+    } catch (err) {
+      console.error('Error enrolling in course:', err);
+      setError(err.message);
+    }
+  };
 
-     // if (hasConflict) {
-       // throw new Error('Cannot enroll: This course conflicts with one of your existing courses');
-      //}
+  const processEnrollment = async (courseId) => {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      const courseToEnroll = courses.find(c => c.id === courseId);
 
       // Determine term based on start and end dates
-      let term;
+      const startDate = new Date(courseToEnroll.start_date);
+      const endDate = new Date(courseToEnroll.end_date);
       const startMonth = startDate.getMonth() + 1;
       const endMonth = endDate.getMonth() + 1;
       const startYear = startDate.getFullYear();
       const endYear = endDate.getFullYear();
 
+      let term;
       if (startMonth === 9 && endMonth === 12) {
         term = 'Fall';
       } else if (startMonth === 1 && endMonth === 4) {
@@ -246,8 +358,9 @@ const CourseRegistrationPage = () => {
       if (enrollError) throw enrollError;
 
       setEnrolledCourses([...enrolledCourses, courseId]);
+      setConfirmDialog({ show: false, message: '', courseId: null });
     } catch (err) {
-      console.error('Error enrolling in course:', err);
+      console.error('Error processing enrollment:', err);
       setError(err.message);
     }
   };
@@ -300,6 +413,14 @@ const CourseRegistrationPage = () => {
 
           {/* Remove the old error display and add ErrorPopup */}
           <ErrorPopup error={error} onClose={clearError} />
+
+          {confirmDialog.show && (
+            <ConfirmDialog
+              message={confirmDialog.message}
+              onConfirm={() => processEnrollment(confirmDialog.courseId)}
+              onCancel={() => setConfirmDialog({ show: false, message: '', courseId: null })}
+            />
+          )}
 
           <div className="bg-white rounded-lg shadow p-3 sm:p-6 mb-8 mx-2">
             {/* Quick subject filters */}
