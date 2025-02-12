@@ -110,7 +110,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 👥 Authors
 
-- Your Name - Initial work
+Ashu Chauhan – 7001571 <br>
+Avi Patel – 6741961 <br>
+Fatima Abourida - 7119490<br>
+Jerome Uwaneme -7141270<br> 
+Olaoluwa Akanji - 6908776 <br>
+Oreoluwa Akanji - 6910483<br>
+Russell Salacup – 7177884 <br>
 
 ## 🙏 Acknowledgments
 
