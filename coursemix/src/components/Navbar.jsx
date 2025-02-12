@@ -142,7 +142,7 @@ export default function Navbar() {
     <nav className="bg-white border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+          {/* Logo idk if we'll ever add a logo ?? */}
           <Link
             href={user ? "/protected/dashboard" : "/"}
             onClick={handleLogoClick}
@@ -260,22 +260,38 @@ export default function Navbar() {
                   >
                     Dashboard
                   </Link>
-                  <div className="space-y-2">
-                    <Link
-                      href="/protected/course-registration"
-                      className="text-gray-600 hover:text-teal-600 transition-colors px-2 py-1 block"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Course Registration
-                    </Link>
-                    <Link
-                      href="/protected/My-Courses"
-                      className="text-gray-600 hover:text-teal-600 transition-colors px-4 py-1 block"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      My Courses
-                    </Link>
-                  </div>
+                  <div className="relative dropdown-container">
+                  <button
+                    onClick={toggleDropdown}
+                    className="flex items-center text-gray-600 hover:text-teal-600 transition-colors px-4 py-1 gap-1"
+                  >
+                    Course Registration
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform ${
+                        isDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  {isDropdownOpen && (
+                    <div className="absolute bg-white shadow-md rounded mt-2 w-48 py-1 z-50">
+                      <Link
+                        href="/protected/course-registration"
+                        className="block px-4 py-2 hover:bg-gray-100 text-gray-600"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        Register
+                      </Link>
+                      <Link
+                        href="/protected/My-Courses"
+                        className="block px-4 py-2 hover:bg-gray-100 text-gray-600"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        My Courses
+                      </Link>
+                    </div>
+                  )}
+                </div>
                   <Link
                     href="/protected/grades"
                     className="text-gray-600 hover:text-teal-600 transition-colors px-2 py-1"
