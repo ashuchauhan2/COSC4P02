@@ -12,9 +12,30 @@ import { differenceInDays, parseISO, isWithinInterval } from 'date-fns'
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
+import ProfileBadger from '@/components/ProfileBadger'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
+
+const getEnrolledCoursesCount = async (userId) => {
+  try {
+    const { count, error } = await supabase
+      .from("enrollments")
+      .select("*", { count: 'exact' })
+      .eq("user_id", userId)
+      .eq("status", "enrolled");
+
+    if (error) {
+      console.error("Error fetching enrolled courses count:", error);
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    console.error("Error in getEnrolledCoursesCount:", error);
+    return 0;
+  }
+};
 
 export default function Dashboard() {
   const router = useRouter()
@@ -23,6 +44,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [termDates, setTermDates] = useState(null)
+  const [enrolledCount, setEnrolledCount] = useState(0)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -102,6 +124,21 @@ export default function Dashboard() {
     checkAuth()
   }, [router])
 
+  useEffect(() => {
+    const fetchEnrolledCount = async () => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error("Error fetching user:", userError);
+        return;
+      }
+
+      const count = await getEnrolledCoursesCount(user.id);
+      setEnrolledCount(count);
+    };
+
+    fetchEnrolledCount();
+  }, []);
+
   if (loading) {
     return <Spinner />
   }
@@ -112,17 +149,7 @@ export default function Dashboard() {
         <div className="w-full lg:w-64 bg-white shadow-lg">
           <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
             <div className="flex lg:flex-col items-center space-x-4 lg:space-x-0">
-              {avatarUrl ? (
-                <Image
-                  src={avatarUrl}
-                  alt="User avatar"
-                  width={64}
-                  height={64}
-                  className="rounded-full lg:w-24 lg:h-24"
-                />
-              ) : (
-                <UserCircleIcon className="h-16 w-16 lg:h-24 lg:w-24 text-gray-400" />
-              )}
+              <ProfileBadger />
               <h2 className="mt-0 lg:mt-4 font-semibold text-lg">
                 {profile?.first_name} {profile?.last_name}
               </h2>
@@ -161,7 +188,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-1 gap-3">
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <p className="text-sm text-gray-600">Courses This Term</p>
-                  <p className="text-lg font-semibold">{profile?.current_courses_count || '0'}</p>
+                  <p className="text-lg font-semibold">{enrolledCount}</p>
                 </div>
                 
                 {termDates && (

@@ -6,6 +6,7 @@ import RequireAuth from '@/components/RequireAuth';
 import Spinner from '@/components/Spinner';
 import debounce from 'lodash/debounce';
 import React from 'react';
+import ErrorPopup from '@/components/ErrorPopup';
 
 const CourseRegistrationPage = () => {
   const [courses, setCourses] = useState([]);
@@ -286,17 +287,19 @@ const CourseRegistrationPage = () => {
     }
   };
 
+  // Add error clearing function
+  const clearError = () => {
+    setError(null);
+  };
+
   return (
     <RequireAuth>
       <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-8 px-2">Course Registration</h1>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 sm:px-4 sm:py-3 rounded mb-4 sm:mb-6 mx-2">
-              {error}
-            </div>
-          )}
+          {/* Remove the old error display and add ErrorPopup */}
+          <ErrorPopup error={error} onClose={clearError} />
 
           <div className="bg-white rounded-lg shadow p-3 sm:p-6 mb-8 mx-2">
             {/* Quick subject filters */}
