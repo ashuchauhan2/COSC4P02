@@ -189,6 +189,13 @@ const TimeTable = () => {
 
   const activeCourses = courses.filter(isCourseActive);
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const dayAbbreviations = {
+    Monday: "Mon",
+    Tuesday: "Tue",
+    Wednesday: "Wed",
+    Thursday: "Thu",
+    Friday: "Fri",
+  };
 
   return (
     <div className="w-full h-[calc(100vh-8rem)] max-w-5xl mx-auto p-4 bg-white rounded-lg shadow-lg">
@@ -234,7 +241,8 @@ const TimeTable = () => {
                 {/* Day Header */}
                 <div className="h-12 border-b border-gray-200 bg-gray-50 flex items-center justify-center">
                   <span className="text-sm font-semibold text-gray-700">
-                    {day}
+                    <span className="hidden sm:inline">{day}</span>
+                    <span className="sm:hidden">{dayAbbreviations[day]}</span>
                   </span>
                 </div>
 
