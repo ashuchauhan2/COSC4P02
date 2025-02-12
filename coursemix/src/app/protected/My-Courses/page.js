@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import RequireAuth from '@/components/RequireAuth';
-import Spinner from '@/components/Spinner';
 
 const MyCoursesPage = () => {
   const [enrolledCourses, setEnrolledCourses] = useState([]);

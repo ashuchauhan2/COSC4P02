@@ -39,7 +39,6 @@ const CourseRegistrationPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDuration, setSelectedDuration] = useState('');
   const [selectedType, setSelectedType] = useState('');
-  const [overlappingCourses, setOverlappingCourses] = useState({});
 
   // Duration options based on the provided information
   const durations = [
@@ -99,7 +98,6 @@ const CourseRegistrationPage = () => {
               overlaps[course.id] = true;
             }
           });
-          setOverlappingCourses(overlaps);
         }
 
         setCourses(coursesData);
@@ -298,9 +296,6 @@ const CourseRegistrationPage = () => {
                   {filteredCourses.map((course) => (
                     <tr 
                       key={course.id} 
-                      className={`hover:bg-gray-50 ${
-                        overlappingCourses[course.id] ? 'bg-red-50' : ''
-                      }`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {course.course_code}
@@ -329,22 +324,12 @@ const CourseRegistrationPage = () => {
                             Drop
                           </button>
                         ) : (
-                          <>
-                            <button
-                              onClick={() => handleEnroll(course.id)}
-                              className={`text-teal-600 hover:text-teal-800 font-medium ${
-                                overlappingCourses[course.id] ? 'opacity-50 cursor-not-allowed' : ''
-                              }`}
-                              disabled={overlappingCourses[course.id]}
-                            >
-                              Enroll
-                            </button>
-                            {overlappingCourses[course.id] && (
-                              <p className="text-xs text-red-600 mt-1">
-                                Time conflict with enrolled course
-                              </p>
-                            )}
-                          </>
+                          <button
+                            onClick={() => handleEnroll(course.id)}
+                            className="text-teal-600 hover:text-teal-800 font-medium"
+                          >
+                            Enroll
+                          </button>
                         )}
                       </td>
                     </tr>
