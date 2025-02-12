@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import Spinner from "@/components/Spinner";
 
 export default function Navbar() {
@@ -13,14 +13,17 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
     const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         if (!mounted) return;
 
         if (session?.user) {
@@ -40,7 +43,7 @@ export default function Navbar() {
           setUser(null);
         }
       } catch (error) {
-        console.error('Session check error:', error);
+        console.error("Session check error:", error);
         setUser(null);
       } finally {
         if (mounted) {
@@ -51,48 +54,61 @@ export default function Navbar() {
 
     checkSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
-      setLoading(true);
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+        setLoading(true);
 
-      try {
-        if (session?.user) {
-          const { data: verificationData } = await supabase
-            .from("user_verification")
-            .select("is_verified")
-            .eq("email", session.user.email)
-            .single();
+        try {
+          if (session?.user) {
+            const { data: verificationData } = await supabase
+              .from("user_verification")
+              .select("is_verified")
+              .eq("email", session.user.email)
+              .single();
 
-          if (verificationData?.is_verified) {
-            setUser(session.user);
-            if (event === "SIGNED_IN") {
-              router.push("/protected/dashboard");
+            if (verificationData?.is_verified) {
+              setUser(session.user);
+              if (event === "SIGNED_IN") {
+                router.push("/protected/dashboard");
+              }
+            } else {
+              await supabase.auth.signOut();
+              setUser(null);
             }
           } else {
-            await supabase.auth.signOut();
             setUser(null);
+            if (event === "SIGNED_OUT") {
+              router.push("/");
+            }
           }
-        } else {
+        } catch (error) {
+          console.error("Auth state change error:", error);
           setUser(null);
-          if (event === "SIGNED_OUT") {
-            router.push("/");
+        } finally {
+          if (mounted) {
+            setLoading(false);
           }
-        }
-      } catch (error) {
-        console.error('Auth state change error:', error);
-        setUser(null);
-      } finally {
-        if (mounted) {
-          setLoading(false);
         }
       }
-    });
+    );
 
     return () => {
       mounted = false;
       authListener?.subscription?.unsubscribe();
     };
   }, [router]);
+
+  useEffect(() => {
+    const closeDropdown = (e) => {
+      if (isDropdownOpen && !e.target.closest(".dropdown-container")) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("click", closeDropdown);
+    return () => document.removeEventListener("click", closeDropdown);
+  }, [isDropdownOpen]);
 
   const handleSignOut = async () => {
     setLoading(true);
@@ -106,6 +122,10 @@ export default function Navbar() {
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
   };
 
   // Only redirect on logo click
@@ -141,12 +161,38 @@ export default function Navbar() {
                 >
                   Dashboard
                 </Link>
-                <Link
-                  href="/protected/course-registration"
-                  className="text-gray-600 hover:text-teal-600 transition-colors px-4 py-1"
-                >
-                  Course Registration
-                </Link>
+                <div className="relative dropdown-container">
+                  <button
+                    onClick={toggleDropdown}
+                    className="flex items-center text-gray-600 hover:text-teal-600 transition-colors px-4 py-1 gap-1"
+                  >
+                    Course Registration
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform ${
+                        isDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  {isDropdownOpen && (
+                    <div className="absolute bg-white shadow-md rounded mt-2 w-48 py-1 z-50">
+                      <Link
+                        href="/protected/course-registration"
+                        className="block px-4 py-2 hover:bg-gray-100 text-gray-600"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        Register
+                      </Link>
+                      <Link
+                        href="/protected/My-Courses"
+                        className="block px-4 py-2 hover:bg-gray-100 text-gray-600"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        My Courses
+                      </Link>
+                    </div>
+                  )}
+                </div>
                 <Link
                   href="/protected/grades"
                   className="text-gray-600 hover:text-teal-600 transition-colors px-4 py-1"
@@ -214,13 +260,22 @@ export default function Navbar() {
                   >
                     Dashboard
                   </Link>
-                  <Link
-                    href="/protected/course-registration"
-                    className="text-gray-600 hover:text-teal-600 transition-colors px-2 py-1"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Course Registration
-                  </Link>
+                  <div className="space-y-2">
+                    <Link
+                      href="/protected/course-registration"
+                      className="text-gray-600 hover:text-teal-600 transition-colors px-2 py-1 block"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Course Registration
+                    </Link>
+                    <Link
+                      href="/protected/My-Courses"
+                      className="text-gray-600 hover:text-teal-600 transition-colors px-4 py-1 block"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      My Courses
+                    </Link>
+                  </div>
                   <Link
                     href="/protected/grades"
                     className="text-gray-600 hover:text-teal-600 transition-colors px-2 py-1"

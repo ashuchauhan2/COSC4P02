@@ -5,6 +5,32 @@ import { supabase } from '@/lib/supabase';
 import RequireAuth from '@/components/RequireAuth';
 import Spinner from '@/components/Spinner';
 
+// Add these helper functions at the top of the file, after imports
+const parseTimeString = (timeStr) => {
+  const [time, period] = timeStr.split(' ');
+  let [hours, minutes] = time.split(':').map(Number);
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+  return hours * 60 + minutes;
+};
+
+const checkTimeOverlap = (course1, course2) => {
+  // Split days into arrays (e.g., "MWF" -> ["M", "W", "F"])
+  const days1 = course1.course_days.split('');
+  const days2 = course2.course_days.split('');
+
+  // Check if there are any common days
+  const commonDays = days1.some(day => days2.includes(day));
+  if (!commonDays) return false;
+
+  // Parse time ranges
+  const [start1, end1] = course1.class_time.split(' - ').map(parseTimeString);
+  const [start2, end2] = course2.class_time.split(' - ').map(parseTimeString);
+
+  // Check for time overlap
+  return !(end1 <= start2 || end2 <= start1);
+};
+
 const CourseRegistrationPage = () => {
   const [courses, setCourses] = useState([]);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
@@ -13,12 +39,13 @@ const CourseRegistrationPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDuration, setSelectedDuration] = useState('');
   const [selectedType, setSelectedType] = useState('');
+  const [overlappingCourses, setOverlappingCourses] = useState({});
 
   // Duration options based on the provided information
   const durations = [
-    { value: 'D1', label: 'Duration 1 (September to April)' },
-    { value: 'D2', label: 'Duration 2 (September to December)' },
-    { value: 'D3', label: 'Duration 3 (January to April)' }
+    { value: '1', label: 'Duration 1 (September to April)' },
+    { value: '2', label: 'Duration 2 (September to December)' },
+    { value: '3', label: 'Duration 3 (January to April)' }
   ];
 
   // Common class types
@@ -53,6 +80,28 @@ const CourseRegistrationPage = () => {
 
         if (enrollmentsError) throw enrollmentsError;
 
+        // After fetching enrollments, get the full course details for enrolled courses
+        if (enrollments.length > 0) {
+          const { data: enrolledCoursesData, error: enrolledCoursesError } = await supabase
+            .from('courses')
+            .select('*')
+            .in('id', enrollments.map(e => e.course_id));
+
+          if (enrolledCoursesError) throw enrolledCoursesError;
+
+          // Check for overlaps with existing courses
+          const overlaps = {};
+          coursesData.forEach(course => {
+            const hasOverlap = enrolledCoursesData.some(enrolledCourse => 
+              course.id !== enrolledCourse.id && checkTimeOverlap(course, enrolledCourse)
+            );
+            if (hasOverlap) {
+              overlaps[course.id] = true;
+            }
+          });
+          setOverlappingCourses(overlaps);
+        }
+
         setCourses(coursesData);
         setEnrolledCourses(enrollments.map(e => e.course_id));
       } catch (err) {
@@ -68,6 +117,26 @@ const CourseRegistrationPage = () => {
 
   const handleEnroll = async (courseId) => {
     try {
+      const courseToEnroll = courses.find(c => c.id === courseId);
+      
+      // Get full details of currently enrolled courses
+      const { data: enrolledCoursesData, error: enrolledCoursesError } = await supabase
+        .from('courses')
+        .select('*')
+        .in('id', enrolledCourses);
+
+      if (enrolledCoursesError) throw enrolledCoursesError;
+
+      // Check for time conflicts
+      const hasConflict = enrolledCoursesData.some(enrolledCourse => 
+        checkTimeOverlap(courseToEnroll, enrolledCourse)
+      );
+
+      if (hasConflict) {
+        setError('Cannot enroll: This course overlaps with one of your existing courses.');
+        return;
+      }
+
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
@@ -144,7 +213,7 @@ const CourseRegistrationPage = () => {
 
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.course_code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDuration = !selectedDuration || course.course_duration === selectedDuration;
+    const matchesDuration = !selectedDuration || course.course_duration === parseInt(selectedDuration);
     const matchesType = !selectedType || course.class_type === selectedType;
     return matchesSearch && matchesDuration && matchesType;
   });
@@ -227,7 +296,12 @@ const CourseRegistrationPage = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredCourses.map((course) => (
-                    <tr key={course.id} className="hover:bg-gray-50">
+                    <tr 
+                      key={course.id} 
+                      className={`hover:bg-gray-50 ${
+                        overlappingCourses[course.id] ? 'bg-red-50' : ''
+                      }`}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {course.course_code}
                       </td>
@@ -255,12 +329,22 @@ const CourseRegistrationPage = () => {
                             Drop
                           </button>
                         ) : (
-                          <button
-                            onClick={() => handleEnroll(course.id)}
-                            className="text-teal-600 hover:text-teal-800 font-medium"
-                          >
-                            Enroll
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleEnroll(course.id)}
+                              className={`text-teal-600 hover:text-teal-800 font-medium ${
+                                overlappingCourses[course.id] ? 'opacity-50 cursor-not-allowed' : ''
+                              }`}
+                              disabled={overlappingCourses[course.id]}
+                            >
+                              Enroll
+                            </button>
+                            {overlappingCourses[course.id] && (
+                              <p className="text-xs text-red-600 mt-1">
+                                Time conflict with enrolled course
+                              </p>
+                            )}
+                          </>
                         )}
                       </td>
                     </tr>
