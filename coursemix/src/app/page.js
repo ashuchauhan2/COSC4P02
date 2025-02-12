@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import LandingPage from '@/components/LandingPage';
 import Spinner from '@/components/Spinner';
+
+
 export default function Home() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -22,10 +24,6 @@ export default function Home() {
 
     checkUser();
   }, [router]);
-
-  if (loading) {
-    return <Spinner />
-  }
 
   return <LandingPage />;
 }

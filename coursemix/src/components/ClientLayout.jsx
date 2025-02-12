@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Spinner from '@/components/Spinner';
 
+
 export default function ClientLayout({ children }) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const pathname = usePathname();
@@ -15,7 +16,7 @@ export default function ClientLayout({ children }) {
     // Reset after transition
     const timer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 500);
+    }, 350);
 
     return () => clearTimeout(timer);
   }, [pathname]);
