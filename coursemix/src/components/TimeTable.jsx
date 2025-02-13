@@ -14,6 +14,9 @@ const dayLetterMapping = {
   Friday: "F",
 };
 
+// Add constant for online course types
+const ONLINE_COURSE_TYPES = ["ASY", "ASO", "SYN", "SYO", "ONM", "HYF", "PRO"];
+
 const TimeTable = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -345,7 +348,7 @@ const TimeTable = () => {
 
         {/* Online Courses Section */}
         {activeCourses.some(
-          (course) => !course.class_time && course.class_type === "ASY"
+          (course) => !course.class_time && ONLINE_COURSE_TYPES.includes(course.class_type)
         ) && (
           <div className="mt-4 border-t border-gray-200 pt-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">
@@ -354,7 +357,7 @@ const TimeTable = () => {
             <div className="flex flex-wrap gap-2">
               {activeCourses
                 .filter(
-                  (course) => !course.class_time && course.class_type === "ASY"
+                  (course) => !course.class_time && ONLINE_COURSE_TYPES.includes(course.class_type)
                 )
                 .map((course) => {
                   const colorHash = course.course_code
@@ -376,7 +379,14 @@ const TimeTable = () => {
                         {course.course_code}
                       </div>
                       <div className="text-xs text-gray-600">
-                        Asynchronous Online
+                        {course.class_type === "ASY" ? "Asynchronous Online" :
+                         course.class_type === "ASO" ? "Asynchronous Online, In-Person Exam" :
+                         course.class_type === "SYN" ? "Synchronous Online" :
+                         course.class_type === "SYO" ? "Synchronous Online, In-Person Exam" :
+                         course.class_type === "ONM" ? "Online Mixed" :
+                         course.class_type === "HYF" ? "Hybrid Flexible" :
+                         course.class_type === "PRO" ? "Project Course" :
+                         "Online"}
                       </div>
                       {course.instructor && (
                         <div className="text-xs text-gray-500 mt-1">

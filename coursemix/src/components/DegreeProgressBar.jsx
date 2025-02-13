@@ -1,6 +1,6 @@
 import React from 'react';
 
-const DegreeProgress = () => {
+const DegreeProgressBar = () => {
   const progress = 85; // This will be dynamic later
 
   return (
@@ -22,4 +22,4 @@ const DegreeProgress = () => {
   );
 };
 
-export default DegreeProgress; 
+export default DegreeProgressBar; 
