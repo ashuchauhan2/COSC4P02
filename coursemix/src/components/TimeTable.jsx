@@ -92,7 +92,7 @@ const TimeTable = () => {
 
     // Calculate minutes since timetable start (8 AM)
     // For debugging
-    console.log("Start Hour:", startHour, "End Hour:", endHour);
+    // console.log("Start Hour:", startHour, "End Hour:", endHour);
 
     const startMinutesSinceTimetableStart = Math.max(
       0,
@@ -107,15 +107,15 @@ const TimeTable = () => {
     const totalMinutesInTimetable = HOURS_COUNT * 60;
 
     // For debugging
-    console.log(
-      "Start minutes since timetable start:",
-      startMinutesSinceTimetableStart
-    );
-    console.log(
-      "End minutes since timetable start:",
-      endMinutesSinceTimetableStart
-    );
-    console.log("Total minutes in timetable:", totalMinutesInTimetable);
+    // console.log(
+    //   "Start minutes since timetable start:",
+    //   startMinutesSinceTimetableStart
+    // );
+    // console.log(
+    //   "End minutes since timetable start:",
+    //   endMinutesSinceTimetableStart
+    // );
+    // console.log("Total minutes in timetable:", totalMinutesInTimetable);
 
     const top =
       (startMinutesSinceTimetableStart / totalMinutesInTimetable) * 100;
@@ -125,7 +125,7 @@ const TimeTable = () => {
       100;
 
     // For debugging
-    console.log("Calculated position:", { top, height });
+    // console.log("Calculated position:", { top, height });
 
     return { top, height };
   };

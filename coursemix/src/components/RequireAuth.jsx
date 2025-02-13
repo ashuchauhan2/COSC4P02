@@ -41,15 +41,18 @@ const RequireAuth = ({ children }) => {
     };
   }, [router]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner />
+  return (
+    <div className="min-h-screen">
+      {isLoading ? (
+        <div className="relative z-10">
+          <Spinner />
+        </div>
+      ) : null}
+      <div className={isLoading ? 'opacity-50' : ''}>
+        {isAuthenticated ? children : null}
       </div>
-    );
-  }
-
-  return isAuthenticated ? children : null;
+    </div>
+  );
 };
 
 export default RequireAuth; 
