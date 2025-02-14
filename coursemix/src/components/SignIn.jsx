@@ -70,29 +70,19 @@ export default function SignIn() {
 
       console.log('Profile check result:', { profile, error: profileError });
 
-      if (profileError) {
-        if (profileError.code === 'PGRST116') {  // Record not found
-          console.log('No profile found, redirecting to profile setup');
-          router.push('/protected/profile-setup');
-          return;
-        }
-        throw profileError;
+      // Don't sign out if there's a profile error, just redirect to profile setup
+      if (profileError || !profile || profile.is_profile_setup !== true) {
+        console.log('Profile incomplete or not found, redirecting to profile setup');
+        router.push('/protected/profile-setup');
+        return;
       }
 
-      // Redirect based on profile setup status
-      if (!profile || profile.is_profile_setup !== true) {
-        console.log('Profile incomplete, redirecting to profile setup');
-        router.push('/protected/profile-setup');
-      } else {
-        console.log('Profile complete, redirecting to dashboard');
-        router.push('/protected/dashboard');
-      }
-      
+      console.log('Profile complete, redirecting to dashboard');
+      router.push('/protected/dashboard');
       router.refresh()
     } catch (error) {
       console.error('Sign in error:', error)
       setError(error.message)
-    } finally {
       setLoading(false)
     }
   }
