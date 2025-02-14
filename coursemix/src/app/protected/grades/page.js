@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import RequireAuth from '@/components/RequireAuth';
 import Spinner from '@/components/Spinner';
 import AddCourseModal from '@/components/AddCourseModal';
 import DegreeProgress from '@/components/DegreeProgressBar';
 import ProfileBadger from '@/components/ProfileBadger';
 
-const GradesPage = () => {
+export default function Grades() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
@@ -171,72 +170,68 @@ const GradesPage = () => {
   };
 
   return (
-    <RequireAuth>
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-[95%] mx-auto py-6">
-          <div className="px-4 py-6">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold text-gray-900">Academic Progress</h1>
-              <button
-                onClick={() => {
-                  setSelectedYear(null);
-                  setShowAddCourseModal(true);
-                }}
-                className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
-              >
-                Add New Credit
-              </button>
-            </div>
-
-            {error && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
-                {error}
-              </div>
-            )}
-
-            <div className="bg-gray-50 shadow overflow-hidden sm:rounded-lg p-6 pb-0 pt-8 mb-6">
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                <div className="w-full md:w-1/3">
-                  <h2 className="text-lg font-medium text-gray-900 mb-2">Program Information</h2>
-                  <div className="space-y-1">
-                    <p className="text-sm text-gray-500">
-                      Program: {userProfile?.programs?.program_name || 'Not specified'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Projected Graduation: Fall 2025
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Average: 90%
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Credits Achieved: 17
-                    </p>
-                  </div>
-                </div>
-                <div className="hidden md:flex md:w-1/3 md:justify-center">
-                  <ProfileBadger />
-                </div>
-                <div className="w-full md:w-1/3">
-                  <DegreeProgress />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-6 overflow-x-auto pb-6">
-              {[1, 2, 3, 4].map(year => renderYearColumn(year))}
-            </div>
-
-            <AddCourseModal
-              isOpen={showAddCourseModal}
-              onClose={() => setShowAddCourseModal(false)}
-              onSubmit={handleAddCourse}
-              year={selectedYear}
-            />
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-[95%] mx-auto py-6">
+        <div className="px-4 py-6">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">Academic Progress</h1>
+            <button
+              onClick={() => {
+                setSelectedYear(null);
+                setShowAddCourseModal(true);
+              }}
+              className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+            >
+              Add New Credit
+            </button>
           </div>
+
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+              {error}
+            </div>
+          )}
+
+          <div className="bg-gray-50 shadow overflow-hidden sm:rounded-lg p-6 pb-0 pt-8 mb-6">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div className="w-full md:w-1/3">
+                <h2 className="text-lg font-medium text-gray-900 mb-2">Program Information</h2>
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-500">
+                    Program: {userProfile?.programs?.program_name || 'Not specified'}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Projected Graduation: Fall 2025
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Average: 90%
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Credits Achieved: 17
+                  </p>
+                </div>
+              </div>
+              <div className="hidden md:flex md:w-1/3 md:justify-center">
+                <ProfileBadger />
+              </div>
+              <div className="w-full md:w-1/3">
+                <DegreeProgress />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-6 overflow-x-auto pb-6">
+            {[1, 2, 3, 4].map(year => renderYearColumn(year))}
+          </div>
+
+          <AddCourseModal
+            isOpen={showAddCourseModal}
+            onClose={() => setShowAddCourseModal(false)}
+            onSubmit={handleAddCourse}
+            year={selectedYear}
+          />
         </div>
       </div>
-    </RequireAuth>
+    </div>
   );
-};
-
-export default GradesPage;
+}

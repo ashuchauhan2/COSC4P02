@@ -2,15 +2,12 @@
 
 import React from 'react'
 import NewProfileSetup from '@/components/NewProfileSetup'
-import RequireAuth from '@/components/RequireAuth'
 import Spinner from '@/components/Spinner'
 
-const NewProfileSetupPage = () => {
+export default function ProfileSetup() {
   return (
-    <RequireAuth>
+    <div className="min-h-screen bg-gray-100">
       <NewProfileSetup />
-    </RequireAuth>
+    </div>
   )
 }
-
-export default NewProfileSetupPage

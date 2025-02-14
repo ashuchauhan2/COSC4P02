@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import RequireAuth from '@/components/RequireAuth';
 import Spinner from '@/components/Spinner';
 import debounce from 'lodash/debounce';
 import React from 'react';
 import ErrorPopup from '@/components/ErrorPopup';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
-const CourseRegistrationPage = () => {
+export default function CourseRegistration() {
   const [courses, setCourses] = useState([]);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -406,196 +405,192 @@ const CourseRegistrationPage = () => {
   };
 
   return (
-    <RequireAuth>
-      <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-8 px-2">Course Registration</h1>
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-8 px-2">Course Registration</h1>
 
-          {/* Remove the old error display and add ErrorPopup */}
-          <ErrorPopup error={error} onClose={clearError} />
+        {/* Remove the old error display and add ErrorPopup */}
+        <ErrorPopup error={error} onClose={clearError} />
 
-          {confirmDialog.show && (
-            <ConfirmDialog
-              message={confirmDialog.message}
-              onConfirm={() => processEnrollment(confirmDialog.courseId)}
-              onCancel={() => setConfirmDialog({ show: false, message: '', courseId: null })}
+        {confirmDialog.show && (
+          <ConfirmDialog
+            message={confirmDialog.message}
+            onConfirm={() => processEnrollment(confirmDialog.courseId)}
+            onCancel={() => setConfirmDialog({ show: false, message: '', courseId: null })}
+          />
+        )}
+
+        <div className="bg-white rounded-lg shadow p-3 sm:p-6 mb-8 mx-2">
+          {/* Quick subject filters */}
+          <div className="mb-4 sm:mb-6">
+            <h2 className="text-sm font-medium text-gray-700 mb-2 sm:mb-3">Popular Subjects</h2>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
+              {popularSubjects.map(subject => (
+                <button
+                  key={subject.code}
+                  onClick={() => handleSubjectClick(subject.code)}
+                  className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
+                    searchTerm === subject.code
+                      ? 'bg-teal-100 text-teal-800'
+                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                  }`}
+                >
+                  {subject.code}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Search and filters */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <input
+              type="text"
+              placeholder="Enter course code (e.g., COSC101)"
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm"
             />
-          )}
+            
+            <select
+              value={selectedDuration}
+              onChange={(e) => handleFilterChange(e.target.value, selectedType)}
+              className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm"
+            >
+              <option value="">All Durations</option>
+              {durations.map(duration => (
+                <option key={duration.value} value={duration.value}>
+                  {duration.label}
+                </option>
+              ))}
+            </select>
 
-          <div className="bg-white rounded-lg shadow p-3 sm:p-6 mb-8 mx-2">
-            {/* Quick subject filters */}
-            <div className="mb-4 sm:mb-6">
-              <h2 className="text-sm font-medium text-gray-700 mb-2 sm:mb-3">Popular Subjects</h2>
-              <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                {popularSubjects.map(subject => (
-                  <button
-                    key={subject.code}
-                    onClick={() => handleSubjectClick(subject.code)}
-                    className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
-                      searchTerm === subject.code
-                        ? 'bg-teal-100 text-teal-800'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                    }`}
-                  >
-                    {subject.code}
-                  </button>
-                ))}
+            <select
+              value={selectedType}
+              onChange={(e) => handleFilterChange(selectedDuration, e.target.value)}
+              className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm"
+            >
+              <option value="">All Types</option>
+              {classTypes.map(type => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Course list */}
+          <div className="-mx-3 sm:mx-0">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Spinner />
               </div>
-            </div>
-
-            {/* Search and filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <input
-                type="text"
-                placeholder="Enter course code (e.g., COSC101)"
-                value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm"
-              />
-              
-              <select
-                value={selectedDuration}
-                onChange={(e) => handleFilterChange(e.target.value, selectedType)}
-                className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm"
-              >
-                <option value="">All Durations</option>
-                {durations.map(duration => (
-                  <option key={duration.value} value={duration.value}>
-                    {duration.label}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={selectedType}
-                onChange={(e) => handleFilterChange(selectedDuration, e.target.value)}
-                className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm"
-              >
-                <option value="">All Types</option>
-                {classTypes.map(type => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Course list */}
-            <div className="-mx-3 sm:mx-0">
-              {loading ? (
-                <div className="flex justify-center py-8">
-                  <Spinner />
-                </div>
-              ) : !searchTerm || searchTerm.length < 4 ? (
-                <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
-                  Enter a course code to search for available courses.
-                </div>
-              ) : courses.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
-                  No courses found matching "{searchTerm}".
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Course Code
-                        </th>
-                        <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Type
-                        </th>
-                        <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Days
-                        </th>
-                        <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Time
-                        </th>
-                        <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Duration
-                        </th>
-                        <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Instructor
-                        </th>
-                        <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Action
-                        </th>
+            ) : !searchTerm || searchTerm.length < 4 ? (
+              <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
+                Enter a course code to search for available courses.
+              </div>
+            ) : courses.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
+                No courses found matching "{searchTerm}".
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Course Code
+                      </th>
+                      <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Days
+                      </th>
+                      <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Time
+                      </th>
+                      <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Duration
+                      </th>
+                      <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Instructor
+                      </th>
+                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {courses.map((course) => (
+                      <tr key={course.id} className="hover:bg-gray-50">
+                        <td className="px-3 sm:px-6 py-2 sm:py-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {course.course_code}
+                          </div>
+                          {/* Mobile-only details */}
+                          <div className="sm:hidden mt-1 space-y-1">
+                            <div className="text-xs text-gray-500">
+                              {course.class_type} • {course.course_days} • {course.class_time}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {course.instructor}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {course.class_type}
+                        </td>
+                        <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {course.course_days}
+                        </td>
+                        <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {course.class_time}
+                        </td>
+                        <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {course.course_duration}
+                        </td>
+                        <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {course.instructor}
+                        </td>
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm">
+                          {enrolledCourses.includes(course.id) ? (
+                            <button
+                              onClick={() => handleDrop(course.id)}
+                              className="text-red-600 hover:text-red-800 font-medium"
+                            >
+                              Drop
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleEnroll(course.id)}
+                              className="text-teal-600 hover:text-teal-800 font-medium"
+                            >
+                              Enroll
+                            </button>
+                          )}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {courses.map((course) => (
-                        <tr key={course.id} className="hover:bg-gray-50">
-                          <td className="px-3 sm:px-6 py-2 sm:py-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {course.course_code}
-                            </div>
-                            {/* Mobile-only details */}
-                            <div className="sm:hidden mt-1 space-y-1">
-                              <div className="text-xs text-gray-500">
-                                {course.class_type} • {course.course_days} • {course.class_time}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {course.instructor}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {course.class_type}
-                          </td>
-                          <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {course.course_days}
-                          </td>
-                          <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {course.class_time}
-                          </td>
-                          <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {course.course_duration}
-                          </td>
-                          <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {course.instructor}
-                          </td>
-                          <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm">
-                            {enrolledCourses.includes(course.id) ? (
-                              <button
-                                onClick={() => handleDrop(course.id)}
-                                className="text-red-600 hover:text-red-800 font-medium"
-                              >
-                                Drop
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleEnroll(course.id)}
-                                className="text-teal-600 hover:text-teal-800 font-medium"
-                              >
-                                Enroll
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-              {/* Load more button */}
-              {hasMore && (
-                <div className="mt-4 text-center">
-                  <button
-                    onClick={loadMore}
-                    disabled={loading}
-                    className="w-full sm:w-auto px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
-                  >
-                    {loading ? 'Loading...' : 'Load More'}
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Load more button */}
+            {hasMore && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={loadMore}
+                  disabled={loading}
+                  className="w-full sm:w-auto px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
+                >
+                  {loading ? 'Loading...' : 'Load More'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </RequireAuth>
+    </div>
   );
-};
-
-export default CourseRegistrationPage;
+}

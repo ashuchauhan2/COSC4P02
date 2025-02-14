@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import RequireAuth from '@/components/RequireAuth'
 import TimeTable from '@/components/TimeTable'
 import DegreeProgress from '@/components/DegreeProgressBar'
 import Spinner from '@/components/Spinner'
@@ -140,7 +139,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <RequireAuth>
+    <div className="min-h-screen bg-gray-100">
       <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
         <div className="w-full lg:w-64 bg-white shadow-lg">
           <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
@@ -268,6 +267,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </RequireAuth>
+    </div>
   )
 } 
