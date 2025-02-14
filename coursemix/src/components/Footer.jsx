@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid text-center grid-cols-1 md:text-left md:grid-cols-3 lg:grid-cols-4 gap-8">
           <div>
             <img src="/CourseMixLogo.png" className="w-[150px] mx-auto" />
           </div>
