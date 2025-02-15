@@ -91,7 +91,7 @@ const CourseReviews = () => {
               courses.map(({ course_id, course_name, course_code }) => (
                 <div key={course_id} className="bg-white shadow-md p-4 rounded-lg mb-4">
                   <div className="flex items-center space-x-3 mb-3">
-                    <AcademicCapIcon className="h-6 w-6 text-indigo-600" />
+                    <AcademicCapIcon className="h-6 w-6 text-teal-600" />
                     <h2 className="text-lg font-semibold">{course_name} ({course_code})</h2>
                   </div>
 
@@ -128,7 +128,7 @@ const CourseReviews = () => {
                     </div>
                     <button
                       onClick={() => handleReviewSubmit(course_id)}
-                      className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                      className="mt-2 bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700"
                     >
                       Submit Review
                     </button>
