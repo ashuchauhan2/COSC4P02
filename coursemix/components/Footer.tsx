@@ -13,7 +13,7 @@ const Footer = () => {
               alt="Course Mix Logo"
               width={150}
               height={50}
-              className="mx-auto"
+              className="mx-auto md:mx-0"
             />
           </div>
           <div>
