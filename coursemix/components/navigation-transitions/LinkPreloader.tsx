@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { navigationEvents } from "./NavigationProgress";
+import { navigationEvents } from "@/components/navigation-transitions/NavigationProgress";
+
+// Track already prefetched pages across the application
+const prefetchedPaths = new Set<string>();
 
 export default function LinkPreloader() {
   const router = useRouter();
   const currentPath = usePathname();
+  const isInitialLoad = useRef(true);
 
   useEffect(() => {
     // Create a mutation observer to watch for new links
@@ -27,12 +31,31 @@ export default function LinkPreloader() {
     // Initial setup for links already on the page
     setupLinkPreloading();
     
-    // Preload common navigation paths on initial page load
-    preloadCommonPaths();
+    // Only preload common paths on initial page load
+    if (isInitialLoad.current) {
+      preloadCommonPaths();
+      isInitialLoad.current = false;
+    }
 
-    // Cleanup observer on component unmount
+    // Cleanup observer on unmount
     return () => observer.disconnect();
   }, [currentPath]);
+
+  // Helper function to safely prefetch a page
+  const safePrefetch = async (path: string) => {
+    // Skip if already prefetched
+    if (prefetchedPaths.has(path)) return;
+    
+    try {
+      // Add to set immediately to prevent duplicate prefetches
+      prefetchedPaths.add(path);
+      await router.prefetch(path);
+    } catch (error) {
+      console.error(`Failed to prefetch ${path}:`, error);
+      // Remove from the set if prefetch failed so we can try again later
+      prefetchedPaths.delete(path);
+    }
+  };
 
   // Preload commonly accessed pages
   const preloadCommonPaths = () => {
@@ -54,12 +77,8 @@ export default function LinkPreloader() {
       .forEach((path, index) => {
         // Stagger prefetching to avoid network congestion, but make it faster
         setTimeout(() => {
-          try {
-            router.prefetch(path);
-          } catch (error) {
-            console.error(`Failed to prefetch ${path}:`, error);
-          }
-        }, index * 75); // Reduced from 150ms for faster prefetching
+          safePrefetch(path);
+        }, index * 75);
       });
   };
 
@@ -86,30 +105,18 @@ export default function LinkPreloader() {
         link.getAttribute('role') === 'navigation'
       ) {
         setTimeout(() => {
-          try {
-            router.prefetch(href);
-          } catch (error) {
-            console.error(`Failed to prefetch ${href}:`, error);
-          }
-        }, 50); // Reduced from 100ms for faster prefetching
+          safePrefetch(href);
+        }, 50);
       }
       
       // Preload on mouseenter with immediate navigation progress indicator
       link.addEventListener('mouseenter', () => {
-        try {
-          router.prefetch(href);
-        } catch (error) {
-          console.error(`Failed to prefetch on hover ${href}:`, error);
-        }
+        safePrefetch(href);
       });
       
       // Also preload on touchstart for mobile devices
       link.addEventListener('touchstart', () => {
-        try {
-          router.prefetch(href);
-        } catch (error) {
-          console.error(`Failed to prefetch on touch ${href}:`, error);
-        }
+        safePrefetch(href);
       });
     });
   };
