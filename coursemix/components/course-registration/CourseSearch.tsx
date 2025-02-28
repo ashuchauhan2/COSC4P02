@@ -37,7 +37,7 @@ const getDurationInfo = (durationCode?: string | number) => {
         period: 'September to December',
         icon: (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />
           </svg>
         )
       };
@@ -248,9 +248,28 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
   const [droppingCourse, setDroppingCourse] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<Set<string>>(new Set());
+  const [selectedDuration, setSelectedDuration] = useState<number>(0);
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 
   const router = useRouter();
   const supabase = createClient();
+
+  // Popular subjects for quick filtering
+  const popularSubjects = [
+    { code: 'COSC', label: 'Computer Science' },
+    { code: 'MATH', label: 'Mathematics' },
+    { code: 'CHEM', label: 'Chemistry' },
+    { code: 'ECON', label: 'Economics' },
+    { code: 'ERSC', label: 'Earth Sciences' },
+  ];
+
+  // Duration options for the filter
+  const durationOptions = [
+    { value: 0, label: 'All Durations' },
+    { value: 1, label: 'Duration 1' },
+    { value: 2, label: 'Duration 2' },
+    { value: 3, label: 'Duration 3' },
+  ];
 
   // For debugging
   useEffect(() => {
@@ -290,121 +309,72 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
   };
 
   // Debounced search function
-  const debouncedSearch = useCallback(
-    debounce(async (query: string) => {
-      if (query.length < 2) {
-        setCourses([]);
-        setLoading(false);
-        return;
-      }
+  const searchCourses = async (query: string, subject: string | null, duration: number) => {
+    if (!query && duration === 0 && !subject) {
+      setCourses([]);
+      setLoading(false);
+      return;
+    }
 
-      try {
-        setLoading(true);
-        
-        // Normalize the search query
-        const normalizedQuery = normalizeCourseCode(query);
-        
-        // Create a filtered query that removes all spaces
+    try {
+      setLoading(true);
+      
+      // Build the base query
+      let supabaseQuery = supabase
+        .from('courses')
+        .select(`
+          id,
+          course_code,
+          course_days,
+          class_time,
+          class_type,
+          instructor,
+          start_date,
+          end_date,
+          course_duration
+        `);
+
+      // Add search query if it exists
+      if (query.length >= 2) {
         const noSpacesQuery = query.replace(/\s+/g, '');
-        
-        // Create different search patterns for flexibility
-        const exactQueryPattern = query.toUpperCase(); // Exact match with spaces
-        const noSpacesQueryPattern = noSpacesQuery.toUpperCase(); // No spaces
-        
-        // Getting course prefix (like "COSC" from "COSC 3P03")
         const prefixMatch = query.match(/^([A-Za-z]+)/);
         const prefix = prefixMatch ? prefixMatch[1].toUpperCase() : '';
         
-        // Check if the query looks like a full course code (e.g., "COSC 4P02" or "COSC4P02")
-        // Course codes typically follow a pattern like: 2-4 letters, followed by a number, a letter, and 2 numbers
-        const isFullCourseCode = /^[A-Za-z]{2,4}\s*\d[A-Za-z]\d{2}$/i.test(query);
-        
-        // Perform database query using ilike with various patterns
-        const { data, error } = await supabase
-          .from('courses')
-          .select(`
-            id,
-            course_code,
-            course_days,
-            class_time,
-            class_type,
-            instructor,
-            start_date,
-            end_date,
-            course_duration
-          `)
-          .or(`course_code.ilike.%${query}%,course_code.ilike.%${noSpacesQuery}%${prefix ? `,course_code.ilike.%${prefix}%` : ''}`)
-          .limit(100);
-
-        if (error) {
-          console.error('Error searching courses:', error);
-          return;
-        }
-
-        // Client-side filtering with ranking for better results
-        let filteredCourses = data || [];
-        
-        // Sort courses by relevance
-        filteredCourses.sort((a, b) => {
-          const codeA = a.course_code.toUpperCase();
-          const codeB = b.course_code.toUpperCase();
-          const noSpacesA = codeA.replace(/\s+/g, '');
-          const noSpacesB = codeB.replace(/\s+/g, '');
-          
-          // Exact match has highest priority
-          if (codeA === exactQueryPattern && codeB !== exactQueryPattern) return -1;
-          if (codeB === exactQueryPattern && codeA !== exactQueryPattern) return 1;
-          
-          // No spaces exact match has next priority
-          if (noSpacesA === noSpacesQueryPattern && noSpacesB !== noSpacesQueryPattern) return -1;
-          if (noSpacesB === noSpacesQueryPattern && noSpacesA !== noSpacesQueryPattern) return 1;
-          
-          // Starts with has next priority
-          const aStartsWith = codeA.startsWith(exactQueryPattern) || noSpacesA.startsWith(noSpacesQueryPattern);
-          const bStartsWith = codeB.startsWith(exactQueryPattern) || noSpacesB.startsWith(noSpacesQueryPattern);
-          if (aStartsWith && !bStartsWith) return -1;
-          if (bStartsWith && !aStartsWith) return 1;
-          
-          // Alphabetical order for remaining
-          return codeA.localeCompare(codeB);
-        });
-        
-        // If the query looks like a full course code, apply stricter filtering
-        if (isFullCourseCode) {
-          // First try to find an exact match (with or without spaces)
-          const exactMatches = filteredCourses.filter(course => {
-            const courseCode = course.course_code.toUpperCase();
-            const noSpacesCourseCode = courseCode.replace(/\s+/g, '');
-            return courseCode === exactQueryPattern || noSpacesCourseCode === noSpacesQueryPattern;
-          });
-          
-          // If we have exact matches, only show those
-          if (exactMatches.length > 0) {
-            setCourses(exactMatches);
-            setLoading(false);
-            return;
-          }
-          
-          // Otherwise, show only very close matches (starts with the same pattern)
-          const closeMatches = filteredCourses.filter(course => {
-            const courseCode = course.course_code.toUpperCase();
-            const noSpacesCourseCode = courseCode.replace(/\s+/g, '');
-            
-            // For course codes like "COSC 4P02", only consider very close matches
-            return courseCode.startsWith(exactQueryPattern) || 
-                  noSpacesCourseCode.startsWith(noSpacesQueryPattern);
-          });
-          
-          setCourses(closeMatches);
-        } else {
-          // For partial searches, limit the results to top 20 for display
-          setCourses(filteredCourses.slice(0, 20));
-        }
-      } catch (error) {
-        console.error('Error searching courses:', error);
-      } finally {
-        setLoading(false);
+        supabaseQuery = supabaseQuery.or(
+          `course_code.ilike.%${query}%,course_code.ilike.%${noSpacesQuery}%${prefix ? `,course_code.ilike.%${prefix}%` : ''}`
+        );
       }
+
+      // Add subject filter if selected
+      if (subject) {
+        supabaseQuery = supabaseQuery.ilike('course_code', `${subject}%`);
+      }
+
+      // Add duration filter if not "All Durations"
+      if (duration > 0) {
+        supabaseQuery = supabaseQuery.eq('course_duration', duration);
+      }
+
+      // Execute the query
+      const { data, error } = await supabaseQuery.limit(100);
+
+      if (error) {
+        console.error('Error searching courses:', error);
+        return;
+      }
+
+      // Update the courses state
+      setCourses(data || []);
+    } catch (error) {
+      console.error('Error searching courses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const debouncedSearch = useCallback(
+    debounce((query: string, subject: string | null, duration: number) => {
+      searchCourses(query, subject, duration);
     }, 300),
     []
   );
@@ -412,7 +382,20 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    debouncedSearch(query);
+    setSelectedSubject(null); // Clear subject selection when searching
+    debouncedSearch(query, null, selectedDuration);
+  };
+
+  const handleSubjectClick = (subject: string) => {
+    const newSubject = subject === selectedSubject ? null : subject;
+    setSelectedSubject(newSubject);
+    setSearchQuery(''); // Clear search query when selecting a subject
+    
+    // Cancel any pending debounced searches
+    debouncedSearch.cancel();
+    
+    // Immediately search with the new subject
+    searchCourses('', newSubject, selectedDuration);
   };
 
   const handleEnroll = async (courseId: string) => {
@@ -638,35 +621,75 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Search Courses</h2>
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            placeholder="Enter course code (e.g., COSC 4P02)"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
-            autoComplete="off"
-          />
-          {loading && (
-            <div className="absolute right-3 top-3">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-teal-500"></div>
+        
+        {/* Popular Subjects */}
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 mb-2">Popular Subjects:</p>
+          <div className="flex flex-wrap gap-2">
+            {popularSubjects.map((subject) => (
+              <button
+                key={subject.code}
+                onClick={() => handleSubjectClick(subject.code)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+                  ${
+                    selectedSubject === subject.code
+                      ? 'bg-teal-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+              >
+                {subject.code}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Duration Filter */}
+        <div className="mb-4">
+          <select
+            value={selectedDuration}
+            onChange={(e) => {
+              const duration = parseInt(e.target.value);
+              setSelectedDuration(duration);
+              // Trigger search with new duration
+              searchCourses(searchQuery, selectedSubject, duration);
+            }}
+            className="w-full md:w-48 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all text-gray-700"
+          >
+            <option value={0}>All Durations</option>
+            <option value={1}>Full Year</option>
+            <option value={2}>Fall Term</option>
+            <option value={3}>Winter Term</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Enter course code (e.g., COSC 4P02)"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
+              autoComplete="off"
+            />
+            {loading && (
+              <div className="absolute right-3 top-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-teal-500"></div>
+              </div>
+            )}
+          </div>
+
+          {message && (
+            <div
+              className={`p-4 rounded-md ${
+                message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+              }`}
+            >
+              {message.text}
             </div>
           )}
         </div>
-        <p className="text-sm text-gray-500 mt-2">
-          Search by course code in any format (with or without spaces)
-        </p>
       </div>
-
-      {message && (
-        <div
-          className={`p-4 rounded-md ${
-            message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {courses.length > 0 ? (
         <div className="space-y-4">

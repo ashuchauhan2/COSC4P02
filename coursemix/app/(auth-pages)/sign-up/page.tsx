@@ -27,6 +27,13 @@ export default function Register() {
       setIsLoading(false);
       return;
     }
+
+    // Check if the email is a Brock University email
+    if (!email.toLowerCase().endsWith('@brocku.ca')) {
+      setError("Only @brocku.ca emails are allowed");
+      setIsLoading(false);
+      return;
+    }
     
     try {
       // Send request to our API to trigger verification
