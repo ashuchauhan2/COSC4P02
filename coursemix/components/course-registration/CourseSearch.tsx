@@ -250,6 +250,10 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<Set<string>>(new Set());
   const [selectedDuration, setSelectedDuration] = useState<number>(0);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
+  const [courseConflicts, setCourseConflicts] = useState<Course[]>([]);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [pendingCourseId, setPendingCourseId] = useState<string | null>(null);
 
   const router = useRouter();
   const supabase = createClient();
@@ -280,20 +284,42 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
   useEffect(() => {
     async function fetchEnrolledCourses() {
       try {
-        const { data, error } = await supabase
+        // First get the enrollment records
+        const { data: enrollments, error: enrollmentsError } = await supabase
           .from('enrollments')
           .select('course_id')
           .eq('user_id', userId)
           .eq('term', term)
           .eq('status', 'enrolled');
 
-        if (error) {
-          console.error('Error fetching enrolled courses:', error);
+        if (enrollmentsError) {
+          console.error('Error fetching enrolled courses:', enrollmentsError);
           return;
         }
-
-        if (data) {
-          setEnrolledCourseIds(new Set(data.map(enrollment => enrollment.course_id)));
+        
+        if (!enrollments || enrollments.length === 0) {
+          setEnrolledCourseIds(new Set());
+          setEnrolledCourses([]);
+          return;
+        }
+        
+        // Get the IDs of enrolled courses
+        const courseIds = enrollments.map(enrollment => enrollment.course_id);
+        setEnrolledCourseIds(new Set(courseIds));
+        
+        // Then fetch the complete course details
+        const { data: courseDetails, error: coursesError } = await supabase
+          .from('courses')
+          .select('*')
+          .in('id', courseIds);
+          
+        if (coursesError) {
+          console.error('Error fetching enrolled course details:', coursesError);
+          return;
+        }
+        
+        if (courseDetails) {
+          setEnrolledCourses(courseDetails);
         }
       } catch (error) {
         console.error('Error fetching enrolled courses:', error);
@@ -306,6 +332,81 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
   // Helper function to normalize course code for search
   const normalizeCourseCode = (code: string): string => {
     return code.replace(/\s+/g, '').toUpperCase();
+  };
+
+  // Parse course days string into an array of days
+  const parseDays = (daysStr?: string): string[] => {
+    if (!daysStr) return [];
+    
+    // Common formats: "MWF", "TR", "M/W/F", "T/R", etc.
+    const normalizedDays = daysStr.toUpperCase()
+      .replace(/[^MTWRFSU]/g, '') // Keep only M, T, W, R, F, S, U
+      .split('');
+    
+    // Convert R to Th for Thursday
+    return normalizedDays.map(day => day === 'R' ? 'Th' : day);
+  };
+
+  // Parse time string into start and end times in minutes
+  const parseTime = (timeStr?: string): { start: number; end: number } | null => {
+    if (!timeStr) return null;
+    
+    // Pattern for time strings like "9:00-10:00", "9:00 AM - 10:30 AM", "14:00-15:30"
+    const timePattern = /(\d{1,2}):?(\d{2})?\s*(AM|PM)?\s*[-–—]\s*(\d{1,2}):?(\d{2})?\s*(AM|PM)?/i;
+    const match = timeStr.match(timePattern);
+    
+    if (!match) return null;
+    
+    let [_, startHour, startMin = '00', startAmPm, endHour, endMin = '00', endAmPm] = match;
+    
+    // Convert hours to 24-hour format
+    let startHour24 = parseInt(startHour);
+    let endHour24 = parseInt(endHour);
+    
+    // Handle AM/PM
+    if (startAmPm && startAmPm.toUpperCase() === 'PM' && startHour24 < 12) startHour24 += 12;
+    if (startAmPm && startAmPm.toUpperCase() === 'AM' && startHour24 === 12) startHour24 = 0;
+    if (endAmPm && endAmPm.toUpperCase() === 'PM' && endHour24 < 12) endHour24 += 12;
+    if (endAmPm && endAmPm.toUpperCase() === 'AM' && endHour24 === 12) endHour24 = 0;
+    
+    // Convert to minutes for easier comparison
+    const startMinutes = startHour24 * 60 + parseInt(startMin);
+    const endMinutes = endHour24 * 60 + parseInt(endMin);
+    
+    return { start: startMinutes, end: endMinutes };
+  };
+
+  // Check if two courses have overlapping schedules
+  const hasScheduleConflict = (course1: Course, course2: Course): boolean => {
+    // If either course is missing schedule information, assume no conflict
+    if (!course1.course_days || !course1.class_time || !course2.course_days || !course2.class_time) {
+      return false;
+    }
+    
+    const days1 = parseDays(course1.course_days);
+    const days2 = parseDays(course2.course_days);
+    
+    // Check for overlapping days
+    const sharedDays = days1.filter(day => days2.includes(day));
+    if (sharedDays.length === 0) return false;
+    
+    // Parse time ranges
+    const time1 = parseTime(course1.class_time);
+    const time2 = parseTime(course2.class_time);
+    
+    if (!time1 || !time2) return false;
+    
+    // Check for time overlap on shared days
+    return (
+      (time1.start <= time2.end && time1.end >= time2.start)
+    );
+  };
+
+  // Find conflicts between a new course and existing enrolled courses
+  const findScheduleConflicts = (newCourse: Course, enrolledCourses: Course[]): Course[] => {
+    return enrolledCourses.filter(enrolledCourse => 
+      hasScheduleConflict(newCourse, enrolledCourse)
+    );
   };
 
   // Debounced search function
@@ -398,9 +499,12 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
     searchCourses('', newSubject, selectedDuration);
   };
 
+  // This is the initial enrollment handler that checks for conflicts
   const handleEnroll = async (courseId: string) => {
     setEnrollingCourse(courseId);
     setMessage(null);
+    setPendingCourseId(null);
+    setCourseConflicts([]);
 
     try {
       // Validate input values
@@ -423,6 +527,55 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
         return;
       }
 
+      // Check if already enrolled in this course
+      if (enrolledCourseIds.has(courseId)) {
+        setMessage({
+          text: 'You are already enrolled in this course.',
+          type: 'error',
+        });
+        return;
+      }
+
+      // Get the course details for the course being enrolled
+      const selectedCourse = courses.find(course => course.id === courseId);
+      if (!selectedCourse) {
+        setMessage({
+          text: 'Course information not found. Please try again.',
+          type: 'error',
+        });
+        return;
+      }
+
+      // Check for schedule conflicts with existing enrolled courses
+      const conflicts = findScheduleConflicts(selectedCourse, enrolledCourses);
+      
+      if (conflicts.length > 0) {
+        // Store conflicts and show the confirmation modal
+        setCourseConflicts(conflicts);
+        setPendingCourseId(courseId);
+        setShowConflictModal(true);
+        return;
+      }
+
+      // If no conflicts, proceed with enrollment
+      await proceedWithEnrollment(courseId);
+
+    } catch (error) {
+      console.error('Error in enrollment process:', error);
+      setMessage({
+        text: 'An unexpected error occurred. Please try again.',
+        type: 'error',
+      });
+    } finally {
+      setEnrollingCourse(null);
+    }
+  };
+
+  // Function to proceed with enrollment after conflict check or confirmation
+  const proceedWithEnrollment = async (courseId: string) => {
+    setEnrollingCourse(courseId);
+    
+    try {
       // Check how many courses the user is already enrolled in for this term
       const { data: currentEnrollments, error: enrollmentCountError } = await supabase
         .from('enrollments')
@@ -466,15 +619,6 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
         return;
       }
 
-      // Check if already enrolled in this course
-      if (enrolledCourseIds.has(courseId)) {
-        setMessage({
-          text: 'You are already enrolled in this course.',
-          type: 'error',
-        });
-        return;
-      }
-
       // Create new enrollment
       const { error } = await supabase.from('enrollments').insert({
         user_id: userId,
@@ -492,7 +636,18 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
         return;
       }
 
-      // Update local state
+      // Get the enrolled course details and add to local state
+      const { data: courseDetails } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('id', courseId)
+        .single();
+      
+      if (courseDetails) {
+        setEnrolledCourses(prev => [...prev, courseDetails]);
+      }
+
+      // Update enrolled course IDs
       setEnrolledCourseIds(prev => {
         const updated = new Set(prev);
         updated.add(courseId);
@@ -503,6 +658,10 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
         text: 'Successfully enrolled in course!',
         type: 'success',
       });
+      
+      // Reset states
+      setPendingCourseId(null);
+      setCourseConflicts([]);
       
       // Refresh the server components
       router.refresh();
@@ -834,6 +993,83 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
           <p className="text-gray-600">Try a different search term</p>
         </div>
       ) : null}
+
+      {/* Schedule Conflict Modal */}
+      {showConflictModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            {/* Background overlay */}
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+
+            {/* Modal panel */}
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                      Schedule Conflict Detected
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500">
+                        There {courseConflicts.length === 1 ? 'is' : 'are'} {courseConflicts.length} scheduling conflict{courseConflicts.length !== 1 ? 's' : ''} with your currently enrolled courses:
+                      </p>
+                      <div className="mt-4 space-y-3">
+                        {courseConflicts.map((conflict) => (
+                          <div key={conflict.id} className="border border-gray-200 rounded-md p-3 bg-gray-50">
+                            <p className="font-medium text-gray-700">{conflict.course_code}</p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {conflict.course_days} - {conflict.class_time}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {conflict.instructor && (`Instructor: ${conflict.instructor}`)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="mt-4 text-sm text-red-600 font-medium">
+                        Are you sure you want to enroll in this course despite the schedule conflict?
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (pendingCourseId) {
+                      setShowConflictModal(false);
+                      proceedWithEnrollment(pendingCourseId);
+                    }
+                  }}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-yellow-600 text-base font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Enroll Anyway
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConflictModal(false);
+                    setPendingCourseId(null);
+                    setCourseConflicts([]);
+                    setEnrollingCourse(null);
+                  }}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
