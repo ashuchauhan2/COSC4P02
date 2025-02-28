@@ -17,7 +17,7 @@ const Footer = () => {
               alt="Course Mix Logo"
               width={150}
               height={50}
-              className="mb-4"
+              className="mx-auto md:mx-0"
             />
             <p className="text-sm mt-3 text-center md:text-left">
               Empowering education through innovative course management solutions.
