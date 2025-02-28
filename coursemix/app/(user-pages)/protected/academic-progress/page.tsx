@@ -37,28 +37,89 @@ export default async function GradesPage() {
     .order("term", { ascending: true });
   
   if (error) {
-    console.error("Error fetching grades:", error);
+    // console.error("Error fetching grades:", error);
   }
   
   // Decrypt grades for display
   const decryptedGrades: { [id: string]: string } = {};
   
   if (grades) {
+    // Keep track of any grades that need to be updated
+    const gradesToUpdate: string[] = [];
+    
     for (const grade of grades) {
       try {
         // Only attempt to decrypt if the grade field exists and appears to be encrypted
-        if (grade.grade && typeof grade.grade === 'string' && grade.grade.includes(':')) {
-          decryptedGrades[grade.id] = decryptGrade(grade.grade, user.id);
+        if (grade.grade && typeof grade.grade === 'string') {
+          if (grade.grade.includes(':')) {
+            try {
+              // Properly handle and log any potential decryption errors
+              const decrypted = decryptGrade(grade.grade, user.id);
+              decryptedGrades[grade.id] = decrypted;
+              // console.log(`Successfully decrypted grade for ${grade.course_code}: ${decrypted}`);
+              
+              // If the grade has a value but is still marked as "in-progress", mark for status update
+              if (grade.status === "in-progress" && decrypted && decrypted.trim() !== '') {
+                // console.log(`Marking ${grade.course_code} for status update: in-progress -> completed`);
+                gradesToUpdate.push(grade.id);
+              }
+            } catch (decryptError) {
+              // console.error(`Decryption error for ${grade.course_code}:`, decryptError);
+              // Store a placeholder value to indicate error
+              decryptedGrades[grade.id] = 'Decryption Error';
+            }
+          } else {
+            // For any unencrypted grades
+            decryptedGrades[grade.id] = grade.grade;
+            // console.log(`Using unencrypted grade for ${grade.course_code}: ${grade.grade}`);
+            
+            // If the grade has a value but is still marked as "in-progress", mark for status update
+            if (grade.status === "in-progress" && grade.grade && grade.grade.trim() !== '') {
+              // console.log(`Marking ${grade.course_code} for status update: in-progress -> completed`);
+              gradesToUpdate.push(grade.id);
+            }
+          }
         } else {
-          // For any unencrypted grades or testing purposes
-          decryptedGrades[grade.id] = grade.grade || 'N/A';
+          // If grade is missing or null
+          decryptedGrades[grade.id] = 'N/A';
+          // console.log(`No grade data for ${grade.course_code}`);
         }
       } catch (e) {
-        console.error(`Error decrypting grade ${grade.id}:`, e);
+        // console.error(`General error processing grade ${grade.id} for ${grade.course_code}:`, e);
         decryptedGrades[grade.id] = 'Error';
       }
     }
+    
+    // Update any grades that need to be changed from "in-progress" to "completed"
+    if (gradesToUpdate.length > 0) {
+      // console.log(`Updating ${gradesToUpdate.length} grades from "in-progress" to "completed"`);
+      
+      // Update grades in bulk
+      const { error: updateError } = await supabase
+        .from("student_grades")
+        .update({ status: "completed" })
+        .in("id", gradesToUpdate);
+      
+      if (updateError) {
+        // console.error("Error updating grade statuses:", updateError);
+      } else {
+        // console.log(`Successfully updated ${gradesToUpdate.length} grades to "completed" status`);
+        
+        // Update the local grades array to reflect the changes
+        grades.forEach(grade => {
+          if (gradesToUpdate.includes(grade.id)) {
+            grade.status = "completed";
+          }
+        });
+      }
+    }
   }
+  
+  // Debug output all grades and their decrypted values
+  // console.log('All grades with decrypted values:');
+  // grades?.forEach(grade => {
+  //   console.log(`${grade.course_code}: DB value = ${grade.grade}, Decrypted = ${decryptedGrades[grade.id]}, Status = ${grade.status}`);
+  // });
   
   // Get user's program
   const { data: programData } = await supabase
@@ -78,7 +139,7 @@ export default async function GradesPage() {
       .eq("program_id", programData.program_id);
     
     if (coursesError) {
-      console.error("Error fetching program courses:", coursesError);
+      // console.error("Error fetching program courses:", coursesError);
     } else {
       programCourses = courses || [];
     }

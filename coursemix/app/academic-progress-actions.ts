@@ -23,12 +23,22 @@ export async function addGradeAction(formData: FormData) {
   const grade = formData.get("grade") as string;
   const term = formData.get("term") as string;
   const year = parseInt(formData.get("year") as string, 10);
-  const status = formData.get("status") as string;
+  let status = formData.get("status") as string;
   
   // Validate form inputs
-  if (!courseCode || !grade || !term || isNaN(year) || !status) {
-    return { error: "All fields are required" };
+  if (!courseCode || !grade || !term || isNaN(year)) {
+    return { error: "Course code, grade, term, and year are required" };
   }
+  
+  // Automatically set status to "completed" when a grade is provided
+  if (grade && grade.trim() !== '') {
+    status = "completed";
+  } else {
+    // Default to "in-progress" if no grade is provided and no status is specified
+    status = status || "in-progress";
+  }
+  
+  // console.log(`Adding grade: ${courseCode}, Grade: ${grade}, Status: ${status}`);
   
   try {
     // Encrypt the grade using the utility function
@@ -47,7 +57,7 @@ export async function addGradeAction(formData: FormData) {
       });
     
     if (error) {
-      console.error("Error adding grade:", error);
+      // console.error("Error adding grade:", error);
       return { error: error.message };
     }
     
@@ -56,7 +66,7 @@ export async function addGradeAction(formData: FormData) {
     
     return { success: true, message: "Grade added successfully" };
   } catch (error) {
-    console.error("Error in addGradeAction:", error);
+    // console.error("Error in addGradeAction:", error);
     return { error: "Failed to add grade. Please try again." };
   }
 }
@@ -77,16 +87,43 @@ export async function updateGradeAction(formData: FormData) {
   // Extract values from form data
   const gradeId = formData.get("grade_id") as string;
   const grade = formData.get("grade") as string;
-  const status = formData.get("status") as string;
+  let status = formData.get("status") as string;
   
   // Validate form inputs
-  if (!gradeId || !grade || !status) {
-    return { error: "All fields are required" };
+  if (!gradeId || !grade) {
+    return { error: "Grade ID and grade value are required" };
   }
   
+  // Automatically set status to "completed" when a grade is provided
+  if (grade && grade.trim() !== '') {
+    status = "completed";
+  } else {
+    // Default to "in-progress" if no grade is provided and no status is specified
+    status = status || "in-progress";
+  }
+  
+  // console.log(`Updating grade: ID=${gradeId}, Value=${grade}, Status=${status}`);
+  
   try {
+    // Retrieve the current grade record to compare
+    const { data: currentGrade, error: lookupError } = await supabase
+      .from("student_grades")
+      .select("*")
+      .eq("id", gradeId)
+      .eq("user_id", user.id)
+      .single();
+    
+    if (lookupError) {
+      // console.error("Error retrieving current grade:", lookupError);
+      return { error: "Could not retrieve current grade record" };
+    }
+    
+    // console.log("Current grade record:", currentGrade);
+    
     // Encrypt the grade using the utility function
     const encryptedGrade = encryptGrade(grade, user.id);
+    
+    // console.log(`Grade encrypted successfully. Updating in database.`);
     
     // Update the grade record with encrypted grade
     const { data, error } = await supabase
@@ -100,16 +137,18 @@ export async function updateGradeAction(formData: FormData) {
       .eq("user_id", user.id); // Ensure user can only update their own grades
     
     if (error) {
-      console.error("Error updating grade:", error);
+      // console.error("Error updating grade:", error);
       return { error: error.message };
     }
+    
+    // console.log("Grade updated successfully:", data);
     
     // Revalidate the page to reflect the updated data
     revalidatePath("/protected/academic-progress");
     
     return { success: true, message: "Grade updated successfully" };
   } catch (error) {
-    console.error("Error in updateGradeAction:", error);
+    // console.error("Error in updateGradeAction:", error);
     return { error: "Failed to update grade. Please try again." };
   }
 }
@@ -241,7 +280,7 @@ export async function saveGradeAction(courseCode: string, grade: string, userId:
     
     // If the grade is empty and there's an existing record, delete it
     if (grade.trim() === "" && existingRecord) {
-      console.log(`Removing grade for course ${courseCode} via saveGradeAction`);
+      // console.log(`Removing grade for course ${courseCode} via saveGradeAction`);
       
       const deleteResult = await supabase
         .from("student_grades")
@@ -250,11 +289,11 @@ export async function saveGradeAction(courseCode: string, grade: string, userId:
         .eq("user_id", userId);
       
       if (deleteResult.error) {
-        console.error("Error removing grade:", deleteResult.error);
+        // console.error("Error removing grade:", deleteResult.error);
         return { error: deleteResult.error.message };
       }
       
-      console.log(`Successfully removed grade for course ${courseCode}`);
+      // console.log(`Successfully removed grade for course ${courseCode}`);
       
       // Revalidate the page to reflect the deleted data
       revalidatePath("/protected/academic-progress");
@@ -274,9 +313,13 @@ export async function saveGradeAction(courseCode: string, grade: string, userId:
     
     if (existingRecord) {
       // Update existing grade with encrypted value
+      // Set status to "completed" when a grade is provided
       result = await supabase
         .from("student_grades")
-        .update({ grade: encryptedGrade })
+        .update({ 
+          grade: encryptedGrade,
+          status: "completed" // Always mark as completed when a grade is provided
+        })
         .eq("id", existingRecord.id);
     } else {
       // Create new grade record with encrypted value
@@ -288,12 +331,12 @@ export async function saveGradeAction(courseCode: string, grade: string, userId:
           grade: encryptedGrade,
           year: new Date().getFullYear(),
           term: "Current", // Default term, could be made selectable
-          status: "in_progress" // Default status
+          status: "completed" // Always mark as completed when a grade is provided
         });
     }
     
     if (result.error) {
-      console.error("Error saving grade:", result.error);
+      // console.error("Error saving grade:", result.error);
       return { error: result.error.message };
     }
     
@@ -302,7 +345,7 @@ export async function saveGradeAction(courseCode: string, grade: string, userId:
     
     return { success: true };
   } catch (error) {
-    console.error("Error in saveGradeAction:", error);
+    // console.error("Error in saveGradeAction:", error);
     return { error: "Failed to save grade" };
   }
 }

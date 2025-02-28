@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { numericToLetterGrade, calculateGPA } from '@/utils/grade-utils';
 import { updateGradeAction, deleteGradeAction, forceDeleteGradeAction } from '@/app/academic-progress-actions';
 import { useRouter } from 'next/navigation';
@@ -37,6 +37,20 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
+  
+  // Debug log to check grades and decrypted grades
+  useEffect(() => {
+    // console.log('Grades from database:', grades);
+    // console.log('Decrypted grades mapping:', decryptedGrades);
+    
+    // Check if any grades are missing from decryptedGrades
+    const missingDecryptions = grades.filter(grade => !decryptedGrades[grade.id]);
+    if (missingDecryptions.length > 0) {
+      setDebugInfo(`Some grades might have decryption issues: ${missingDecryptions.map(g => g.course_code).join(', ')}`);
+      // console.warn('Grades missing decryption:', missingDecryptions);
+    }
+  }, [grades, decryptedGrades]);
   
   // Group grades by year and term
   const groupedGrades: GroupedGrades = {};
@@ -66,15 +80,53 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
   const termGPAs: { [key: string]: number } = {};
   const yearGPAs: { [key: number]: number } = {};
   const allGrades: string[] = [];
+  const numericGrades: number[] = []; // Add array to store numeric grades
   
   // Process each grade for GPA calculation
   grades.forEach(grade => {
     const decryptedGrade = decryptedGrades[grade.id];
     
+    // console.log(`Processing grade: ${grade.course_code}, Status: ${grade.status}, Decrypted value: ${decryptedGrade}`);
+    
     // Only include completed courses with valid grades
-    if (grade.status === 'completed' && decryptedGrade) {
+    if (grade.status === 'completed' && decryptedGrade && decryptedGrade !== 'Error' && decryptedGrade !== 'Decryption Error' && decryptedGrade !== 'N/A') {
+      // console.log(`Including ${grade.course_code} in GPA calculation with value: ${decryptedGrade}`);
+      
       // Create term key in format "YEAR-TERM"
       const termKey = `${grade.year}-${grade.term}`;
+      
+      // Store numeric grade if it's a number, or convert letter grade to estimated numeric value
+      let numericGrade: number | null = null;
+      
+      if (!isNaN(Number(decryptedGrade))) {
+        numericGrade = Number(decryptedGrade);
+        // Ensure grade doesn't exceed 100
+        numericGrade = Math.min(numericGrade, 100);
+        numericGrades.push(numericGrade); // Add to numeric grades array
+        // console.log(`Added numeric grade: ${numericGrade}`);
+      } else {
+        // Estimate numeric value based on letter grade (midpoint of range)
+        switch(decryptedGrade) {
+          case 'A+': numericGrade = 95; break;
+          case 'A': numericGrade = 87.5; break;
+          case 'A-': numericGrade = 82.5; break;
+          case 'B+': numericGrade = 77.5; break;
+          case 'B': numericGrade = 75; break;
+          case 'B-': numericGrade = 72.5; break;
+          case 'C+': numericGrade = 67.5; break;
+          case 'C': numericGrade = 65; break;
+          case 'C-': numericGrade = 62.5; break;
+          case 'D+': numericGrade = 57.5; break;
+          case 'D': numericGrade = 55; break;
+          case 'D-': numericGrade = 52.5; break;
+          case 'F': numericGrade = 45; break;
+          default: numericGrade = null;
+        }
+        
+        if (numericGrade !== null) {
+          numericGrades.push(numericGrade);
+        }
+      }
       
       // Convert numeric grades to letter grades if needed
       let letterGrade = decryptedGrade;
@@ -85,36 +137,80 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
       // Add to all grades
       allGrades.push(letterGrade);
       
-      // Add to term-specific grades
+      // Add to term-specific grades collection
       if (!termGPAs[termKey]) {
+        // Initialize with the first grade in this term
         termGPAs[termKey] = calculateGPA([letterGrade]);
       } else {
-        const existingGrades = termGPAs[termKey] * (Object.keys(termGPAs).length);
-        termGPAs[termKey] = (existingGrades + calculateGPA([letterGrade])) / (Object.keys(termGPAs).length + 1);
+        // Re-collect all letter grades for this term to recalculate accurately
+        const termLetterGrades: string[] = [];
+        
+        // Find all grades in this term and collect their letter grades
+        grades.filter(g => 
+          g.status === 'completed' && 
+          g.year === grade.year && 
+          g.term === grade.term &&
+          decryptedGrades[g.id]
+        ).forEach(g => {
+          let lg = decryptedGrades[g.id];
+          if (!isNaN(Number(lg))) {
+            lg = numericToLetterGrade(Number(lg));
+          }
+          termLetterGrades.push(lg);
+        });
+        
+        // Recalculate the term GPA with all grades for this term
+        termGPAs[termKey] = calculateGPA(termLetterGrades);
       }
       
-      // Add to year-specific grades
+      // Add to year-specific grades collection
       if (!yearGPAs[grade.year]) {
+        // Initialize with the first grade in this year
         yearGPAs[grade.year] = calculateGPA([letterGrade]);
       } else {
-        const existingGrades = yearGPAs[grade.year] * (Object.keys(yearGPAs).length);
-        yearGPAs[grade.year] = (existingGrades + calculateGPA([letterGrade])) / (Object.keys(yearGPAs).length + 1);
+        // Re-collect all letter grades for this year to recalculate accurately
+        const yearLetterGrades: string[] = [];
+        
+        // Find all grades in this year and collect their letter grades
+        grades.filter(g => 
+          g.status === 'completed' && 
+          g.year === grade.year &&
+          decryptedGrades[g.id]
+        ).forEach(g => {
+          let lg = decryptedGrades[g.id];
+          if (!isNaN(Number(lg))) {
+            lg = numericToLetterGrade(Number(lg));
+          }
+          yearLetterGrades.push(lg);
+        });
+        
+        // Recalculate the year GPA with all grades for this year
+        yearGPAs[grade.year] = calculateGPA(yearLetterGrades);
       }
     }
   });
   
-  // Calculate overall GPA
+  // Calculate overall GPA using all grades correctly
   const overallGPA = calculateGPA(allGrades);
+  
+  // Calculate numerical average
+  const numericalAverage = numericGrades.length 
+    ? numericGrades.reduce((sum, grade) => sum + grade, 0) / numericGrades.length 
+    : 0;
   
   // Start edit handler
   const handleStartEdit = (grade: Grade) => {
+    // console.log(`Starting edit for grade: ${grade.id}, Course: ${grade.course_code}, Current value: ${decryptedGrades[grade.id]}`);
     setEditGradeId(grade.id);
     setEditGradeValue(decryptedGrades[grade.id] || '');
-    setEditStatus(grade.status);
+    
+    // Default to "completed" status when editing a grade
+    setEditStatus("completed");
   };
   
   // Cancel edit handler
   const handleCancelEdit = () => {
+    // console.log('Cancelling edit');
     setEditGradeId(null);
     setEditGradeValue('');
     setEditStatus('');
@@ -125,13 +221,30 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
   const handleSaveEdit = async () => {
     if (!editGradeId) return;
     
+    // Validate grade value
+    if (!isNaN(Number(editGradeValue)) && Number(editGradeValue) > 100) {
+      setError('Grade cannot exceed 100. Please enter a valid grade.');
+      return;
+    }
+    
+    // Always set status to "completed" when saving a grade
+    const statusToSave = "completed";
+    
+    // console.log(`Saving grade: ${editGradeId}, New value: ${editGradeValue}, Status: ${statusToSave}`);
+    
     setIsSubmitting(true);
     setError(null);
     
     const formData = new FormData();
     formData.append('grade_id', editGradeId);
     formData.append('grade', editGradeValue);
-    formData.append('status', editStatus);
+    formData.append('status', statusToSave);
+    
+    // console.log('Submitting grade update:', {
+    //   grade_id: editGradeId,
+    //   grade: editGradeValue,
+    //   status: statusToSave
+    // });
     
     const result = await updateGradeAction(formData);
     
@@ -139,19 +252,17 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
     
     if ('error' in result && result.error) {
       setError(result.error);
+      // console.error('Error updating grade:', result.error);
     } else {
       setSuccess('Grade updated successfully');
       setEditGradeId(null);
       setEditGradeValue('');
       setEditStatus('');
       
-      // Refresh page data
-      router.refresh();
+      // console.log('Grade update successful, forcing page reload');
       
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccess(null);
-      }, 3000);
+      // Force a complete refresh to ensure UI updates properly
+      window.location.reload();
     }
   };
   
@@ -168,32 +279,30 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
     formData.append('grade_id', gradeId);
     
     try {
-      console.log(`Attempting to delete grade with ID: ${gradeId}`);
+      // console.log(`Attempting to delete grade with ID: ${gradeId}`);
       
       // Try the standard delete method first
       let result = await deleteGradeAction(formData);
       
       // If that fails, try the force delete method
       if ('error' in result && result.error) {
-        console.log("Standard delete failed, trying force delete:", result.error);
+        // console.log("Standard delete failed, trying force delete:", result.error);
         result = await forceDeleteGradeAction(formData);
       }
       
       setIsSubmitting(false);
       
       if ('error' in result && result.error) {
-        console.error("All delete methods failed:", result.error);
+        // console.error("All delete methods failed:", result.error);
         setError(result.error);
       } else {
         setSuccess('Grade deleted successfully');
         
-        // Force a complete refresh after a short delay to ensure UI updates
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
+        // Force a complete refresh to ensure UI updates properly
+        window.location.reload();
       }
     } catch (error) {
-      console.error('Error deleting grade:', error);
+      // console.error('Error deleting grade:', error);
       setError('An unexpected error occurred. Please try again.');
       setIsSubmitting(false);
     }
@@ -209,10 +318,10 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
   const completedCourses = grades.filter(g => g.status === 'completed').length;
   const inProgressCourses = grades.filter(g => g.status === 'in-progress').length;
   const totalCourses = completedCourses + inProgressCourses;
-  const remainingCourses = Math.max(0, 20 - totalCourses);
+  const remainingCourses = Math.max(0, 40 - totalCourses);
   
   // Calculate percentage complete
-  const percentComplete = Math.min(100, Math.round((completedCourses / 20) * 100));
+  const percentComplete = Math.min(100, Math.round((completedCourses / 40) * 100));
   
   return (
     <div className="space-y-8">
@@ -225,6 +334,19 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
       {success && (
         <div className="bg-green-50 text-green-700 p-3 rounded-md mb-4">
           {success}
+        </div>
+      )}
+      
+      {debugInfo && (
+        <div className="bg-yellow-50 text-yellow-700 p-3 rounded-md mb-4">
+          <p><strong>Debug Info:</strong> {debugInfo}</p>
+          <p className="text-sm mt-2">Try refreshing the page completely or signing out and back in if grades are not displaying properly.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 rounded-md text-sm"
+          >
+            Force Refresh
+          </button>
         </div>
       )}
 
@@ -256,7 +378,7 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
           <span className="text-sm font-medium text-gray-600 whitespace-nowrap">{percentComplete}% Complete</span>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div className="bg-teal-50 p-4 rounded-lg">
             <h3 className="text-lg font-medium text-teal-700">Completed</h3>
             <p className="text-3xl font-bold text-teal-900">{completedCourses}</p>
@@ -271,12 +393,33 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
             <h3 className="text-lg font-medium text-gray-700">Remaining</h3>
             <p className="text-3xl font-bold text-gray-900">{remainingCourses}</p>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-gray-700 mb-1">Brock University Average</h3>
+            <p className={`text-3xl font-bold ${
+              numericalAverage >= 80 ? 'text-green-600' : 
+              numericalAverage >= 70 ? 'text-blue-600' : 
+              numericalAverage >= 60 ? 'text-yellow-600' : 
+              'text-red-600'
+            }`}>
+              {numericalAverage.toFixed(1)}%
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Brock's percentage-based grading system</p>
+          </div>
 
           <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-700 mb-2">Overall GPA</h3>
-            <p className={`text-3xl font-bold ${overallGPA >= 3.0 ? 'text-green-600' : overallGPA >= 2.0 ? 'text-blue-600' : 'text-red-600'}`}>
+            <h3 className="text-lg font-medium text-gray-700 mb-1">Standard GPA (4.0 Scale)</h3>
+            <p className={`text-3xl font-bold ${
+              overallGPA >= 3.7 ? 'text-green-600' : 
+              overallGPA >= 3.0 ? 'text-teal-600' : 
+              overallGPA >= 2.0 ? 'text-blue-600' : 
+              'text-red-600'
+            }`}>
               {overallGPA.toFixed(2)}
             </p>
+            <p className="text-xs text-gray-500 mt-1">Equivalent to 4.0 scale used at other universities</p>
           </div>
         </div>
       </div>
@@ -345,7 +488,13 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
                                     <input
                                       type="text"
                                       value={editGradeValue}
-                                      onChange={(e) => setEditGradeValue(e.target.value)}
+                                      onChange={(e) => {
+                                        // Validate numeric input
+                                        const value = e.target.value;
+                                        if (value === '' || (!isNaN(Number(value)) && Number(value) <= 100) || isNaN(Number(value))) {
+                                          setEditGradeValue(e.target.value);
+                                        }
+                                      }}
                                       className="w-24 px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500"
                                     />
                                   ) : (
@@ -360,9 +509,9 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
                                       value={editStatus}
                                       onChange={(e) => setEditStatus(e.target.value)}
                                       className="w-32 px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500"
+                                      disabled={true} /* Disable status selection since we're always setting to completed */
                                     >
                                       <option value="completed">Completed</option>
-                                      <option value="in-progress">In Progress</option>
                                     </select>
                                   ) : (
                                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[grade.status] || 'bg-gray-100 text-gray-800'}`}>
