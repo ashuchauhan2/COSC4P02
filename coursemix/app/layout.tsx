@@ -2,10 +2,10 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
-import { PageTransition } from "@/components/PageTransition";
-import NavigationProgress from "@/components/NavigationProgress";
-import ScrollManager from "@/components/ScrollManager";
-import LinkPreloader from "@/components/LinkPreloader";
+import { PageTransition } from "@/components/navigation-transitions/PageTransition";
+import NavigationProgress from "@/components/navigation-transitions/NavigationProgress";
+import ScrollManager from "@/components/navigation-transitions/ScrollManager";
+import LinkPreloader from "@/components/navigation-transitions/LinkPreloader";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
