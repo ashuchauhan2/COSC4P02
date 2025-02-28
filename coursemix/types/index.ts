@@ -61,4 +61,38 @@ export interface Enrollment {
   status: 'active' | 'dropped' | 'completed';
   created_at: string;
   updated_at: string;
+}
+
+// Grade related types
+export interface StudentGrade {
+  id: string;
+  user_id: string;
+  course_code: string;
+  grade: string; // Encrypted grade string
+  term: string;
+  year: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DecryptedGrade {
+  id: string;
+  course_code: string;
+  grade: string; // Clear text grade
+  decrypted_grade?: string;
+  term: string;
+  year: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AcademicProgressSummary {
+  completedCourses: number;
+  inProgressCourses: number;
+  plannedCourses: number;
+  remainingCourses: number;
+  overallGPA: number;
+  percentComplete: number;
 } 

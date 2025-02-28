@@ -200,10 +200,10 @@ export default function Navbar() {
                   )}
                 </div>
                 <Link
-                  href="/protected/grades"
+                  href="/protected/academic-progress"
                   className="text-gray-600 hover:text-teal-600 transition-colors px-4 py-1"
                 >
-                  Grades
+                  Academic Progress
                 </Link>
                 <Link
                   href="/protected/course-reviews"
