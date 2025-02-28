@@ -437,13 +437,28 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
 
       // Add search query if it exists
       if (query.length >= 2) {
-        const noSpacesQuery = query.replace(/\s+/g, '');
-        const prefixMatch = query.match(/^([A-Za-z]+)/);
-        const prefix = prefixMatch ? prefixMatch[1].toUpperCase() : '';
-        
-        supabaseQuery = supabaseQuery.or(
-          `course_code.ilike.%${query}%,course_code.ilike.%${noSpacesQuery}%${prefix ? `,course_code.ilike.%${prefix}%` : ''}`
-        );
+        const noSpacesQuery = query.replace(/\s+/g, '').toUpperCase();
+        const withSpacesQuery = query.toUpperCase();
+
+        // Split the query into subject and number parts if possible
+        const matches = noSpacesQuery.match(/^([A-Z]+)(\d.*)?$/);
+        const subjectPart = matches?.[1] || '';
+        const numberPart = matches?.[2] || '';
+
+        // Create different variations of the search pattern
+        const searchPatterns = [
+          noSpacesQuery,                              // e.g., "COSC1P50"
+          withSpacesQuery,                            // e.g., "COSC 1P50"
+          subjectPart + ' ' + numberPart,            // e.g., "COSC 1P50"
+          subjectPart + numberPart                   // e.g., "COSC1P50"
+        ].filter(Boolean); // Remove empty patterns
+
+        // Build the search condition
+        const searchConditions = searchPatterns.map(pattern => 
+          `course_code.ilike.%${pattern}%`
+        ).join(',');
+
+        supabaseQuery = supabaseQuery.or(searchConditions);
       }
 
       // Add subject filter if selected
@@ -456,16 +471,39 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
         supabaseQuery = supabaseQuery.eq('course_duration', duration);
       }
 
-      // Execute the query
-      const { data, error } = await supabaseQuery.limit(20);
+      // Determine limit based on search query specificity
+      // More specific searches get a higher limit to ensure we find matching courses
+      let resultLimit = 20;
+      
+      // If we have a more specific query (likely contains course number), increase the limit
+      if (query.length > 5 || (query.match(/\d/) && query.length > 3)) {
+        resultLimit = 100; // Increased limit for specific searches
+      }
+
+      // Execute the query with dynamic limit
+      const { data, error } = await supabaseQuery.limit(resultLimit);
 
       if (error) {
         console.error('Error searching courses:', error);
         return;
       }
 
-      // Update the courses state
-      setCourses(data || []);
+      // If this is a very specific query (like a full course code), prioritize exact matches
+      if (query.length >= 7) { // Typical full course code length (e.g., "COSC 3P32")
+        const exactMatches = data?.filter(course => 
+          course.course_code.toLowerCase().includes(query.toLowerCase())
+        );
+        
+        // If we have exact matches, show them first
+        if (exactMatches && exactMatches.length > 0) {
+          setCourses(exactMatches);
+        } else {
+          setCourses(data || []);
+        }
+      } else {
+        // For broader searches, just return all matches
+        setCourses(data || []);
+      }
     } catch (error) {
       console.error('Error searching courses:', error);
     } finally {
