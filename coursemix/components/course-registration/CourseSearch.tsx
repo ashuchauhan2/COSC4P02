@@ -356,7 +356,7 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
       }
 
       // Execute the query
-      const { data, error } = await supabaseQuery.limit(100);
+      const { data, error } = await supabaseQuery.limit(20);
 
       if (error) {
         console.error('Error searching courses:', error);
