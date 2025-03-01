@@ -259,7 +259,7 @@ export async function deleteGradeAction(formData: FormData) {
  * Saves a grade for a specific course from the CourseCard component
  * Allows clearing a grade if an empty string is provided
  */
-export async function saveGradeAction(courseCode: string, grade: string, userId: string) {
+export async function saveGradeAction(courseCode: string, grade: string, userId: string, requirementId?: string) {
   const supabase = await createClient();
   
   // Verify the user ID matches the authenticated user for security
@@ -270,17 +270,30 @@ export async function saveGradeAction(courseCode: string, grade: string, userId:
   }
   
   try {
-    // Check if there's already a grade for this course
-    const { data: existingRecord } = await supabase
+    // Build the query to find existing grades for this specific course and requirement
+    let query = supabase
       .from("student_grades")
       .select("id")
       .eq("user_id", userId)
-      .eq("course_code", courseCode)
-      .single();
+      .eq("course_code", courseCode);
+    
+    // If requirement ID is provided, add it to the filter
+    if (requirementId) {
+      query = query.eq("requirement_id", requirementId);
+    }
+    
+    // Execute the query
+    const { data: existingRecord, error: queryError } = await query.single();
+    
+    // Handle potential query errors
+    if (queryError && queryError.code !== 'PGRST116') {
+      console.error("Error querying existing grade:", queryError);
+      return { error: "Failed to check for existing grade" };
+    }
     
     // If the grade is empty and there's an existing record, delete it
     if (grade.trim() === "" && existingRecord) {
-      // console.log(`Removing grade for course ${courseCode} via saveGradeAction`);
+      console.log(`Removing grade for course ${courseCode} (requirement ID: ${requirementId || 'none'}) via saveGradeAction`);
       
       const deleteResult = await supabase
         .from("student_grades")
@@ -289,11 +302,11 @@ export async function saveGradeAction(courseCode: string, grade: string, userId:
         .eq("user_id", userId);
       
       if (deleteResult.error) {
-        // console.error("Error removing grade:", deleteResult.error);
+        console.error("Error removing grade:", deleteResult.error);
         return { error: deleteResult.error.message };
       }
       
-      // console.log(`Successfully removed grade for course ${courseCode}`);
+      console.log(`Successfully removed grade for course ${courseCode} (requirement ID: ${requirementId || 'none'})`);
       
       // Revalidate the page to reflect the deleted data
       revalidatePath("/protected/academic-progress");
@@ -318,9 +331,13 @@ export async function saveGradeAction(courseCode: string, grade: string, userId:
         .from("student_grades")
         .update({ 
           grade: encryptedGrade,
-          status: "completed" // Always mark as completed when a grade is provided
+          status: "completed", // Always mark as completed when a grade is provided
+          requirement_id: requirementId || null // Include requirement_id if provided
         })
-        .eq("id", existingRecord.id);
+        .eq("id", existingRecord.id)
+        .eq("user_id", userId); // Extra security check
+      
+      console.log(`Updated grade for course ${courseCode} (requirement ID: ${requirementId || 'none'})`);
     } else {
       // Create new grade record with encrypted value
       result = await supabase
@@ -331,21 +348,24 @@ export async function saveGradeAction(courseCode: string, grade: string, userId:
           grade: encryptedGrade,
           year: new Date().getFullYear(),
           term: "Current", // Default term, could be made selectable
-          status: "completed" // Always mark as completed when a grade is provided
+          status: "completed", // Always mark as completed when a grade is provided
+          requirement_id: requirementId || null // Include requirement_id if provided
         });
+      
+      console.log(`Created new grade for course ${courseCode} (requirement ID: ${requirementId || 'none'})`);
     }
     
     if (result.error) {
-      // console.error("Error saving grade:", result.error);
+      console.error("Error saving grade:", result.error);
       return { error: result.error.message };
     }
     
     // Revalidate the page to reflect the new data
     revalidatePath("/protected/academic-progress");
     
-    return { success: true };
+    return { success: true, message: "Grade saved successfully" };
   } catch (error) {
-    // console.error("Error in saveGradeAction:", error);
+    console.error("Error in saveGradeAction:", error);
     return { error: "Failed to save grade" };
   }
 }
@@ -431,5 +451,117 @@ export async function forceDeleteGradeAction(formData: FormData) {
   } catch (error) {
     console.error("Error in forceDeleteGradeAction:", error);
     return { error: "Failed to force delete grade. Please try again." };
+  }
+}
+
+/**
+ * Toggles a course's in-progress status
+ */
+export async function toggleCourseStatusAction(courseCode: string, userId: string, requirementId?: string) {
+  const supabase = await createClient();
+
+  // Verify the user ID matches the authenticated user for security
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user || user.id !== userId) {
+    return { error: "User authentication error" };
+  }
+
+  try {
+    // Build the query to find existing records for this specific course and requirement
+    let query = supabase
+      .from("student_grades")
+      .select("id, status")
+      .eq("user_id", userId)
+      .eq("course_code", courseCode);
+    
+    // If requirement ID is provided, add it to the filter
+    if (requirementId) {
+      query = query.eq("requirement_id", requirementId);
+    }
+    
+    // Execute the query
+    const { data: existingRecord, error: queryError } = await query.single();
+    
+    // Handle case where query might have returned no rows
+    if (queryError && queryError.code !== 'PGRST116') {
+      return { error: queryError.message };
+    }
+
+    console.log(`Toggling status for course ${courseCode} (requirement ID: ${requirementId || 'none'})`);
+
+    // If there's an existing record
+    if (existingRecord) {
+      // If it's already in-progress, remove it
+      if (existingRecord.status === "in-progress") {
+        const { error: deleteError } = await supabase
+          .from("student_grades")
+          .delete()
+          .eq("id", existingRecord.id)
+          .eq("user_id", userId);
+
+        if (deleteError) {
+          console.error("Error removing in-progress status:", deleteError);
+          return { error: `Failed to remove from in-progress: ${deleteError.message}` };
+        }
+        
+        console.log(`Removed in-progress status for course ${courseCode} (requirement ID: ${requirementId || 'none'})`);
+        
+        // Successful deletion
+        revalidatePath("/protected/academic-progress");
+        return { success: true, message: "Removed from in-progress courses", isInProgress: false };
+      } 
+      // Otherwise, update to in-progress
+      else {
+        const { error: updateError } = await supabase
+          .from("student_grades")
+          .update({
+            status: "in-progress",
+            updated_at: new Date().toISOString(),
+            requirement_id: requirementId || null // Ensure the requirement ID is set
+          })
+          .eq("id", existingRecord.id)
+          .eq("user_id", userId);
+
+        if (updateError) {
+          console.error("Error updating to in-progress:", updateError);
+          return { error: `Failed to update to in-progress: ${updateError.message}` };
+        }
+        
+        console.log(`Updated to in-progress for course ${courseCode} (requirement ID: ${requirementId || 'none'})`);
+        
+        // Successful update
+        revalidatePath("/protected/academic-progress");
+        return { success: true, message: "Added to in-progress courses", isInProgress: true };
+      }
+    } 
+    // Create new in-progress record
+    else {
+      const { error: insertError } = await supabase
+        .from("student_grades")
+        .insert({
+          user_id: userId,
+          course_code: courseCode,
+          grade: null,
+          year: new Date().getFullYear(),
+          term: "Current",
+          status: "in-progress",
+          requirement_id: requirementId || null // Include requirement_id if provided
+        });
+
+      if (insertError) {
+        console.error("Error adding to in-progress:", insertError);
+        return { error: `Failed to add to in-progress: ${insertError.message}` };
+      }
+      
+      console.log(`Created new in-progress record for course ${courseCode} (requirement ID: ${requirementId || 'none'})`);
+      
+      // Successful creation
+      revalidatePath("/protected/academic-progress");
+      return { success: true, message: "Added to in-progress courses", isInProgress: true };
+    }
+  } catch (error) {
+    console.error("Error in toggleCourseStatusAction:", error);
+    return { error: "Failed to toggle course status" };
   }
 } 

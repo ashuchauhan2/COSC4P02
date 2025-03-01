@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { saveGradeAction, deleteGradeAction, forceDeleteGradeAction } from "@/app/academic-progress-actions";
+import { saveGradeAction, deleteGradeAction, forceDeleteGradeAction, toggleCourseStatusAction } from "@/app/academic-progress-actions";
 import { useRouter } from "next/navigation";
+import { Plus, Minus } from "lucide-react";
 
 interface CourseCardProps {
   courseCode: string;
@@ -15,6 +16,8 @@ interface CourseCardProps {
   existingGrade?: string;
   userId: string;
   gradeId?: string;
+  status?: string;
+  requirementId?: string;
 }
 
 export default function CourseCard({
@@ -25,27 +28,51 @@ export default function CourseCard({
   existingGrade,
   userId,
   gradeId,
+  status,
+  requirementId,
 }: CourseCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [grade, setGrade] = useState(existingGrade || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasGrade, setHasGrade] = useState(!!existingGrade);
+  const [courseStatus, setCourseStatus] = useState(status || "");
+  const [isInProgress, setIsInProgress] = useState(status === "in-progress");
   const router = useRouter();
   
   // Update local state when props change
   useEffect(() => {
     setGrade(existingGrade || "");
     setHasGrade(!!existingGrade);
-  }, [existingGrade]);
+    setCourseStatus(status || "");
+    setIsInProgress(status === "in-progress");
+  }, [existingGrade, status]);
+
+  const validateGrade = (gradeValue: string): boolean => {
+    // Handle numeric grades
+    const numericGrade = parseFloat(gradeValue);
+    if (!isNaN(numericGrade)) {
+      return numericGrade >= 0 && numericGrade <= 100;
+    }
+    
+    // Handle letter grades (always valid since they're predefined)
+    const validLetterGrades = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'];
+    return validLetterGrades.includes(gradeValue.toUpperCase());
+  };
 
   const handleSaveGrade = async () => {
     if (!grade.trim()) return;
+    
+    // Validate the grade before saving
+    if (!validateGrade(grade)) {
+      toast.error("Please enter a valid grade (0-100 for numeric grades)");
+      return;
+    }
     
     setIsSubmitting(true);
     
     try {
       // Use the server action to save the grade
-      const result = await saveGradeAction(courseCode, grade, userId);
+      const result = await saveGradeAction(courseCode, grade, userId, requirementId);
       
       if (result.error) {
         toast.error(result.error);
@@ -53,6 +80,8 @@ export default function CourseCard({
         toast.success("Grade saved successfully");
         setIsEditing(false);
         setHasGrade(true);
+        // Update status to completed when grade is added
+        setCourseStatus("completed");
         // Refresh the page data
         router.refresh();
       }
@@ -112,6 +141,7 @@ export default function CourseCard({
         // Update local state immediately
         setGrade("");
         setHasGrade(false);
+        setCourseStatus("");
         
         toast.success("Grade deleted successfully");
         
@@ -128,13 +158,31 @@ export default function CourseCard({
     }
   };
 
+  const handleToggleInProgress = async () => {
+    setIsSubmitting(true);
+    try {
+      const result = await toggleCourseStatusAction(courseCode, userId, requirementId);
+      
+      if ('error' in result && result.error) {
+        toast.error(result.error);
+      } else {
+        const newStatus = !isInProgress ? "in-progress" : "";
+        setIsInProgress(!isInProgress);
+        setCourseStatus(newStatus);
+        router.refresh();
+      }
+    } catch (error) {
+      toast.error("Failed to update course status");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const getStatusColor = () => {
-    if (!existingGrade) return "border-gray-200 bg-white";
+    // First priority: Check status field from database
+    if (courseStatus === "in-progress") return "border-blue-400 bg-blue-50/80";
     
-    const gradeToCheck = existingGrade;
-    const numericGrade = parseFloat(gradeToCheck);
-    
-    // Convert letter grades to numeric values for comparison
+    // Helper function to convert letter grades to numeric values
     const getNumericValue = (grade: string) => {
       const letterGrades: { [key: string]: number } = {
         'A+': 90, 'A': 85, 'A-': 80,
@@ -145,72 +193,116 @@ export default function CourseCard({
       };
       return letterGrades[grade.toUpperCase()] || 0;
     };
-
-    // If there's a minimum grade requirement
-    if (minGrade) {
-      const studentGradeValue = isNaN(numericGrade) ? getNumericValue(gradeToCheck) : numericGrade;
-      const minGradeValue = isNaN(parseFloat(minGrade)) ? getNumericValue(minGrade) : parseFloat(minGrade);
+    
+    // Helper function to check if a grade meets requirements
+    const isPassingGrade = (gradeValue: string): boolean => {
+      if (!gradeValue) return false;
       
-      return studentGradeValue >= minGradeValue 
-        ? "border-green-400 bg-green-50" 
-        : "border-red-400 bg-red-50";
+      const numericGrade = parseFloat(gradeValue);
+      const gradeNumericValue = isNaN(numericGrade) ? getNumericValue(gradeValue) : numericGrade;
+      
+      // If there's a minimum grade requirement, use that
+      if (minGrade) {
+        const minGradeValue = isNaN(parseFloat(minGrade)) ? getNumericValue(minGrade) : parseFloat(minGrade);
+        return gradeNumericValue >= minGradeValue;
+      }
+      
+      // Otherwise use 50 as the passing threshold
+      return gradeNumericValue >= 50;
+    };
+    
+    // If no grade exists and no specific status, use default styling
+    if (!existingGrade && !courseStatus) return "border-gray-200 bg-white";
+    
+    // If there's a grade (regardless if status is "completed" or not specified)
+    if (existingGrade) {
+      return isPassingGrade(existingGrade) 
+        ? "border-green-400 bg-green-50/80" 
+        : "border-red-400 bg-red-50/80";
     }
     
-    // If no minimum grade requirement, check if passing (>= 50)
-    if (isNaN(numericGrade)) {
-      // For letter grades
-      const numericValue = getNumericValue(gradeToCheck);
-      return numericValue >= 50 
-        ? "border-green-400 bg-green-50" 
-        : "border-red-400 bg-red-50";
-    } else {
-      // For numeric grades
-      return numericGrade >= 50 
-        ? "border-green-400 bg-green-50" 
-        : "border-red-400 bg-red-50";
-    }
+    // Default color if none of the above conditions are met
+    return "border-gray-200 bg-white";
   };
 
   return (
-    <div className={`rounded-lg shadow-md p-4 border ${getStatusColor()} transition-all hover:shadow-lg`}>
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="font-bold text-gray-800">{courseCode}</h3>
-          <div className="text-sm text-gray-600 mt-1">
-            <span className="font-medium">{creditWeight} credits</span>
-            {minGrade && (
-              <span className="ml-2">
-                • Min. grade: <span className="font-medium">{minGrade}</span>
-              </span>
-            )}
-
-            
-            {requirementType && (
-              <div className="mt-1">
-                <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-700">
-                  {requirementType}
+    <div className={`rounded-lg shadow-sm p-4 border ${getStatusColor()} transition-all hover:shadow-md group`}>
+      <div className="flex flex-col h-full min-h-[120px]">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-1 mb-1">
+              <h3 className="font-bold text-gray-800">{courseCode}</h3>
+              {!isInProgress && !hasGrade && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleInProgress}
+                  disabled={isSubmitting}
+                  className="h-5 w-5 text-blue-600 hover:text-blue-800 hover:bg-blue-100 p-0.5 rounded-full opacity-80 hover:opacity-100"
+                  title="Add to Progress"
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              )}
+              {isInProgress && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleInProgress}
+                  disabled={isSubmitting}
+                  className="h-5 w-5 text-red-600 hover:text-red-800 hover:bg-red-100 p-0.5 rounded-full opacity-80 hover:opacity-100"
+                  title="Remove from Progress"
+                >
+                  <Minus className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+            <div className="text-xs text-gray-600">
+              <span className="font-medium">{creditWeight} credit{creditWeight !== 1 ? 's' : ''}</span>
+              {minGrade && (
+                <span className="ml-1">
+                  • Min: <span className="font-medium">{minGrade}</span>
                 </span>
-              </div>
-            )}
+              )}
+              
+              {requirementType && (
+                <div className="mt-1">
+                  <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700 font-medium">
+                    {requirementType}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
+          
+          {/* Show grade value in top right */}
+          {hasGrade && existingGrade && !isEditing && (
+            <div className="text-lg font-bold px-2 py-1 rounded-md bg-white/80 shadow-sm border border-gray-100">
+              {existingGrade}
+            </div>
+          )}
         </div>
-        
-        <div className="text-right">
+
+        {/* Grade editing and buttons at bottom */}
+        <div className="flex justify-end mt-auto pt-3">
           {isEditing ? (
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-end gap-2 w-full">
               <Input
                 type="text"
                 value={grade}
                 onChange={(e) => setGrade(e.target.value)}
                 placeholder="Enter grade"
-                className="w-24 text-right"
+                className="w-full sm:w-32 text-center focus:ring-2 focus:ring-blue-400 h-8 text-sm"
+                style={{ textAlign: 'center' }}
+                autoFocus
               />
-              <div className="flex gap-2">
+              <div className="flex gap-1">
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => setIsEditing(false)}
                   disabled={isSubmitting}
+                  className="border-gray-300 h-7 text-xs"
                 >
                   Cancel
                 </Button>
@@ -218,49 +310,47 @@ export default function CourseCard({
                   size="sm"
                   onClick={handleSaveGrade}
                   disabled={isSubmitting}
+                  className="h-7 text-xs"
                 >
                   Save
                 </Button>
               </div>
             </div>
           ) : (
-            <>
+            <div className="flex gap-1">
               {hasGrade && existingGrade ? (
-                <div>
-                  <div className="text-xl font-bold">
-                    {existingGrade}
-                  </div>
-                  <div className="flex gap-2 mt-1 justify-end">
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                    className="px-3 opacity-70 group-hover:opacity-100 transition-opacity border-gray-300 h-7 text-xs"
+                  >
+                    Edit
+                  </Button>
+                  {gradeId && (
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => setIsEditing(true)}
+                      className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200 px-3 opacity-70 group-hover:opacity-100 transition-opacity h-7 text-xs"
+                      onClick={handleDeleteGrade}
+                      disabled={isSubmitting}
                     >
-                      Edit
+                      Delete
                     </Button>
-                    {gradeId && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200"
-                        onClick={handleDeleteGrade}
-                        disabled={isSubmitting}
-                      >
-                        Delete
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                  )}
+                </>
               ) : (
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => setIsEditing(true)}
+                  className="px-3 border-gray-300 h-7 text-xs"
                 >
                   Add Grade
                 </Button>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>

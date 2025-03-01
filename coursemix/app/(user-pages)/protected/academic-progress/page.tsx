@@ -169,6 +169,20 @@ export default async function GradesPage() {
           programCourses.length > 0 ? (
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">Program Requirements</h2>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center text-sm">
+                <div className="text-blue-500 mr-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                  </svg>
+                </div>
+                <div className="text-blue-700">
+                  <span className="font-medium">Pro Tip:</span> Click the <span className="inline-flex items-center justify-center bg-blue-100 text-blue-700 rounded-full h-4 w-4 text-xs mx-0.5">+</span> icon on any course to mark it as "in progress". This helps you track courses you're currently taking before entering final grades.
+                </div>
+              </div>
+              
               <CourseList 
                 courses={programCourses}
                 grades={grades || []}
