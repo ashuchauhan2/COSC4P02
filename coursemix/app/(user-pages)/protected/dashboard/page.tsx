@@ -4,6 +4,7 @@ import Timetable from "@/components/dashboard/Timetable";
 import UserProfile from "@/components/dashboard/UserProfile";
 import { getCurrentTerm, getCurrentDateET, toEasternTime } from "@/utils/date-utils";
 import { Course, Term, ExtendedTermInfo } from "@/types";
+import { numericToLetterGrade, decryptGrade } from "@/utils/grade-utils";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -33,6 +34,79 @@ export default async function DashboardPage() {
     .select("*")
     .eq("id", userProfile.program_id)
     .single();
+
+  // Fetch grades for academic progress
+  const { data: grades } = await supabase
+    .from("student_grades")
+    .select("*")
+    .eq("user_id", user.id);
+
+  // Decrypt grades manually
+  const decryptedGrades: { [id: string]: string } = {};
+  
+  if (grades) {
+    for (const grade of grades) {
+      try {
+        if (grade.grade && typeof grade.grade === 'string' && grade.grade.includes(':')) {
+          try {
+            const decrypted = decryptGrade(grade.grade, user.id);
+            decryptedGrades[grade.id] = decrypted;
+          } catch (decryptError) {
+            decryptedGrades[grade.id] = 'Decryption Error';
+          }
+        } else {
+          decryptedGrades[grade.id] = grade.grade || 'N/A';
+        }
+      } catch (e) {
+        decryptedGrades[grade.id] = 'Error';
+      }
+    }
+  }
+
+  // Calculate academic progress
+  let completedCourses = 0;
+  const numericGrades: number[] = [];
+
+  if (grades) {
+    grades.forEach(grade => {
+      const decryptedGrade = decryptedGrades[grade.id];
+      
+      if (grade.status === 'completed' && decryptedGrade && decryptedGrade !== 'Error' && decryptedGrade !== 'Decryption Error' && decryptedGrade !== 'N/A') {
+        completedCourses++;
+        
+        let numericGrade: number | null = null;
+        
+        if (!isNaN(Number(decryptedGrade))) {
+          numericGrade = Math.min(Number(decryptedGrade), 100);
+        } else {
+          // Convert letter grades to numeric values
+          switch(decryptedGrade) {
+            case 'A+': numericGrade = 95; break;
+            case 'A': numericGrade = 87.5; break;
+            case 'A-': numericGrade = 82.5; break;
+            case 'B+': numericGrade = 77.5; break;
+            case 'B': numericGrade = 75; break;
+            case 'B-': numericGrade = 72.5; break;
+            case 'C+': numericGrade = 67.5; break;
+            case 'C': numericGrade = 65; break;
+            case 'C-': numericGrade = 62.5; break;
+            case 'D+': numericGrade = 57.5; break;
+            case 'D': numericGrade = 55; break;
+            case 'D-': numericGrade = 52.5; break;
+            case 'F': numericGrade = 45; break;
+          }
+        }
+        
+        if (numericGrade !== null) {
+          numericGrades.push(numericGrade);
+        }
+      }
+    });
+  }
+
+  const currentAverage = numericGrades.length 
+    ? numericGrades.reduce((sum, grade) => sum + grade, 0) / numericGrades.length 
+    : 0;
 
   // Get current term - from the screenshot we can see it's "Winter" in the database
   const currentTermRaw = "Winter"; // Hardcoded based on screenshot
@@ -234,7 +308,11 @@ export default async function DashboardPage() {
             <UserProfile 
               userProfile={userProfile} 
               program={program} 
-              termInfo={termInfo} 
+              termInfo={termInfo}
+              academicProgress={{
+                currentAverage,
+                completedCourses
+              }}
             />
           </div>
           
