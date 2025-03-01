@@ -121,7 +121,7 @@ export default function UserProfile({ userProfile, program, termInfo }: UserProf
             <span className="text-xs font-medium text-gray-700">N/A%</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-xs text-gray-500">Credits Completed</span>
+            <span className="text-xs text-gray-500">Courses Completed</span>
             <span className="text-xs font-medium text-gray-700">0</span>
           </div>
           <div className="flex justify-between">
@@ -140,10 +140,10 @@ export default function UserProfile({ userProfile, program, termInfo }: UserProf
           My Courses
         </Link>
         <Link 
-          href="/protected/grades" 
+          href="/protected/academic-progress" 
           className="block w-full text-center py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium text-gray-700 transition-colors"
         >
-          Grades
+          Academic Progress
         </Link>
         <Link 
           href="/protected/course-registration" 

@@ -305,11 +305,11 @@ export default function Navbar() {
                     )}
                   </div>
                   <Link
-                    href="/protected/grades"
+                    href="/protected/academic-progress"
                     className="text-gray-600 hover:text-teal-600 transition-colors px-2 py-1"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Grades
+                    Academic Progress
                   </Link>
                   <Link
                     href="/protected/course-reviews"
