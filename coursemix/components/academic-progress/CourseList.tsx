@@ -15,6 +15,7 @@ interface StudentGrade {
   grade: string;
   year: number;
   term: string;
+  status: string;
 }
 
 interface CourseListProps {
@@ -43,10 +44,10 @@ export default function CourseList({
     {}
   );
 
-  // Create a mapping of course codes to their grades
+  // Create a mapping of course codes to their grades and statuses
   const courseGrades: { [courseCode: string]: string } = {};
-  // Create a mapping of course codes to their grade IDs
   const courseGradeIds: { [courseCode: string]: string } = {};
+  const courseStatuses: { [courseCode: string]: string } = {};
   
   grades.forEach((grade) => {
     const decryptedGrade = decryptedGrades[grade.id];
@@ -54,6 +55,7 @@ export default function CourseList({
       courseGrades[grade.course_code] = decryptedGrade;
       courseGradeIds[grade.course_code] = grade.id;
     }
+    courseStatuses[grade.course_code] = grade.status;
   });
 
   const years = Object.keys(coursesByYear)
@@ -76,6 +78,7 @@ export default function CourseList({
                 existingGrade={courseGrades[course.course_code]}
                 gradeId={courseGradeIds[course.course_code]}
                 userId={userId}
+                status={courseStatuses[course.course_code]}
               />
             ))}
           </div>

@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { saveGradeAction, deleteGradeAction, forceDeleteGradeAction } from "@/app/academic-progress-actions";
+import { saveGradeAction, deleteGradeAction, forceDeleteGradeAction, toggleCourseStatusAction } from "@/app/academic-progress-actions";
 import { useRouter } from "next/navigation";
+import { Plus, Minus } from "lucide-react";
 
 interface CourseCardProps {
   courseCode: string;
@@ -15,6 +16,7 @@ interface CourseCardProps {
   existingGrade?: string;
   userId: string;
   gradeId?: string;
+  status?: string;
 }
 
 export default function CourseCard({
@@ -25,21 +27,42 @@ export default function CourseCard({
   existingGrade,
   userId,
   gradeId,
+  status,
 }: CourseCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [grade, setGrade] = useState(existingGrade || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasGrade, setHasGrade] = useState(!!existingGrade);
+  const [isInProgress, setIsInProgress] = useState(status === "in-progress");
   const router = useRouter();
   
   // Update local state when props change
   useEffect(() => {
     setGrade(existingGrade || "");
     setHasGrade(!!existingGrade);
-  }, [existingGrade]);
+    setIsInProgress(status === "in-progress");
+  }, [existingGrade, status]);
+
+  const validateGrade = (gradeValue: string): boolean => {
+    // Handle numeric grades
+    const numericGrade = parseFloat(gradeValue);
+    if (!isNaN(numericGrade)) {
+      return numericGrade >= 0 && numericGrade <= 100;
+    }
+    
+    // Handle letter grades (always valid since they're predefined)
+    const validLetterGrades = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'];
+    return validLetterGrades.includes(gradeValue.toUpperCase());
+  };
 
   const handleSaveGrade = async () => {
     if (!grade.trim()) return;
+    
+    // Validate the grade before saving
+    if (!validateGrade(grade)) {
+      toast.error("Please enter a valid grade (0-100 for numeric grades)");
+      return;
+    }
     
     setIsSubmitting(true);
     
@@ -128,7 +151,26 @@ export default function CourseCard({
     }
   };
 
+  const handleToggleInProgress = async () => {
+    setIsSubmitting(true);
+    try {
+      const result = await toggleCourseStatusAction(courseCode, userId);
+      
+      if ('error' in result && result.error) {
+        toast.error(result.error);
+      } else {
+        setIsInProgress(!isInProgress);
+        router.refresh();
+      }
+    } catch (error) {
+      toast.error("Failed to update course status");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const getStatusColor = () => {
+    if (isInProgress) return "border-blue-400 bg-blue-50";
     if (!existingGrade) return "border-gray-200 bg-white";
     
     const gradeToCheck = existingGrade;
@@ -173,29 +215,64 @@ export default function CourseCard({
 
   return (
     <div className={`rounded-lg shadow-md p-4 border ${getStatusColor()} transition-all hover:shadow-lg`}>
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="font-bold text-gray-800">{courseCode}</h3>
-          <div className="text-sm text-gray-600 mt-1">
-            <span className="font-medium">{creditWeight} credits</span>
-            {minGrade && (
-              <span className="ml-2">
-                • Min. grade: <span className="font-medium">{minGrade}</span>
-              </span>
-            )}
-
-            
-            {requirementType && (
-              <div className="mt-1">
-                <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-700">
-                  {requirementType}
+      <div className="flex flex-col h-full">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-gray-800">{courseCode}</h3>
+              {!isInProgress && !hasGrade && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleInProgress}
+                  disabled={isSubmitting}
+                  className="h-6 w-6 text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5"
+                  title="Add to Progress"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
+              {isInProgress && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleInProgress}
+                  disabled={isSubmitting}
+                  className="h-6 w-6 text-red-600 hover:text-red-800 hover:bg-red-50 p-0.5"
+                  title="Remove from Progress"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="text-sm text-gray-600 mt-1">
+              <span className="font-medium">{creditWeight} credits</span>
+              {minGrade && (
+                <span className="ml-2">
+                  • Min. grade: <span className="font-medium">{minGrade}</span>
                 </span>
-              </div>
-            )}
+              )}
+              
+              {requirementType && (
+                <div className="mt-1">
+                  <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-700">
+                    {requirementType}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
+          
+          {/* Show grade value in top right */}
+          {hasGrade && existingGrade && !isEditing && (
+            <div className="text-xl font-bold">
+              {existingGrade}
+            </div>
+          )}
         </div>
-        
-        <div className="text-right">
+
+        {/* Grade editing and buttons at bottom */}
+        <div className="flex justify-end mt-4">
           {isEditing ? (
             <div className="flex flex-col items-end gap-2">
               <Input
@@ -224,33 +301,28 @@ export default function CourseCard({
               </div>
             </div>
           ) : (
-            <>
+            <div className="flex gap-2">
               {hasGrade && existingGrade ? (
-                <div>
-                  <div className="text-xl font-bold">
-                    {existingGrade}
-                  </div>
-                  <div className="flex gap-2 mt-1 justify-end">
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Edit
+                  </Button>
+                  {gradeId && (
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => setIsEditing(true)}
+                      className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200"
+                      onClick={handleDeleteGrade}
+                      disabled={isSubmitting}
                     >
-                      Edit
+                      Delete
                     </Button>
-                    {gradeId && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200"
-                        onClick={handleDeleteGrade}
-                        disabled={isSubmitting}
-                      >
-                        Delete
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                  )}
+                </>
               ) : (
                 <Button 
                   variant="outline" 
@@ -260,7 +332,7 @@ export default function CourseCard({
                   Add Grade
                 </Button>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
