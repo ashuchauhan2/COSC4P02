@@ -432,4 +432,80 @@ export async function forceDeleteGradeAction(formData: FormData) {
     console.error("Error in forceDeleteGradeAction:", error);
     return { error: "Failed to force delete grade. Please try again." };
   }
+}
+
+/**
+ * Toggles a course's in-progress status
+ */
+export async function toggleCourseStatusAction(courseCode: string, userId: string) {
+  const supabase = await createClient();
+  
+  // Verify the user ID matches the authenticated user for security
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user || user.id !== userId) {
+    return { error: "User authentication error" };
+  }
+  
+  try {
+    // Check if there's already a record for this course
+    const { data: existingRecord } = await supabase
+      .from("student_grades")
+      .select("id, status")
+      .eq("user_id", userId)
+      .eq("course_code", courseCode)
+      .single();
+    
+    if (existingRecord) {
+      if (existingRecord.status === "in-progress") {
+        // If removing from progress, delete the record entirely
+        const { error: deleteError } = await supabase
+          .from("student_grades")
+          .delete()
+          .eq("id", existingRecord.id)
+          .eq("user_id", userId);
+        
+        if (deleteError) {
+          return { error: deleteError.message };
+        }
+      } else {
+        // If not in progress, update to in-progress
+        const { error: updateError } = await supabase
+          .from("student_grades")
+          .update({
+            status: "in-progress",
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", existingRecord.id)
+          .eq("user_id", userId);
+        
+        if (updateError) {
+          return { error: updateError.message };
+        }
+      }
+    } else {
+      // If the course isn't in the database, add it as in-progress
+      const { error: insertError } = await supabase
+        .from("student_grades")
+        .insert({
+          user_id: userId,
+          course_code: courseCode,
+          grade: null,
+          year: new Date().getFullYear(),
+          term: "Current",
+          status: "in-progress"
+        });
+      
+      if (insertError) {
+        return { error: insertError.message };
+      }
+    }
+    
+    // Revalidate the page to reflect the changes
+    revalidatePath("/protected/academic-progress");
+    
+    return { success: true };
+  } catch (error) {
+    return { error: "Failed to toggle course status" };
+  }
 } 

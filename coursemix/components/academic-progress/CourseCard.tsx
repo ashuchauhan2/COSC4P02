@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { saveGradeAction, deleteGradeAction, forceDeleteGradeAction } from "@/app/academic-progress-actions";
+import { saveGradeAction, deleteGradeAction, forceDeleteGradeAction, toggleCourseStatusAction } from "@/app/academic-progress-actions";
 import { useRouter } from "next/navigation";
+import { Plus, Minus } from "lucide-react";
 
 interface CourseCardProps {
   courseCode: string;
@@ -15,6 +16,7 @@ interface CourseCardProps {
   existingGrade?: string;
   userId: string;
   gradeId?: string;
+  status?: string;
 }
 
 export default function CourseCard({
@@ -25,18 +27,21 @@ export default function CourseCard({
   existingGrade,
   userId,
   gradeId,
+  status,
 }: CourseCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [grade, setGrade] = useState(existingGrade || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasGrade, setHasGrade] = useState(!!existingGrade);
+  const [isInProgress, setIsInProgress] = useState(status === "in-progress");
   const router = useRouter();
   
   // Update local state when props change
   useEffect(() => {
     setGrade(existingGrade || "");
     setHasGrade(!!existingGrade);
-  }, [existingGrade]);
+    setIsInProgress(status === "in-progress");
+  }, [existingGrade, status]);
 
   const validateGrade = (gradeValue: string): boolean => {
     // Handle numeric grades
@@ -146,7 +151,26 @@ export default function CourseCard({
     }
   };
 
+  const handleToggleInProgress = async () => {
+    setIsSubmitting(true);
+    try {
+      const result = await toggleCourseStatusAction(courseCode, userId);
+      
+      if ('error' in result && result.error) {
+        toast.error(result.error);
+      } else {
+        setIsInProgress(!isInProgress);
+        router.refresh();
+      }
+    } catch (error) {
+      toast.error("Failed to update course status");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const getStatusColor = () => {
+    if (isInProgress) return "border-blue-400 bg-blue-50";
     if (!existingGrade) return "border-gray-200 bg-white";
     
     const gradeToCheck = existingGrade;
@@ -193,7 +217,33 @@ export default function CourseCard({
     <div className={`rounded-lg shadow-md p-4 border ${getStatusColor()} transition-all hover:shadow-lg`}>
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="font-bold text-gray-800">{courseCode}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-gray-800">{courseCode}</h3>
+            {!isInProgress && !hasGrade && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleToggleInProgress}
+                disabled={isSubmitting}
+                className="h-6 w-6 text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5"
+                title="Add to Progress"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
+            {isInProgress && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleToggleInProgress}
+                disabled={isSubmitting}
+                className="h-6 w-6 text-red-600 hover:text-red-800 hover:bg-red-50 p-0.5"
+                title="Remove from Progress"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           <div className="text-sm text-gray-600 mt-1">
             <span className="font-medium">{creditWeight} credits</span>
             {minGrade && (
@@ -213,7 +263,7 @@ export default function CourseCard({
           </div>
         </div>
         
-        <div className="text-right">
+        <div className="text-right flex flex-col items-end gap-2">
           {isEditing ? (
             <div className="flex flex-col items-end gap-2">
               <Input
