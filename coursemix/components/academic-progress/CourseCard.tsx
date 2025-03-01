@@ -13,11 +13,11 @@ interface CourseCardProps {
   creditWeight: number;
   minGrade?: string;
   requirementType?: string;
-  requirementId: string;
   existingGrade?: string;
   userId: string;
   gradeId?: string;
   status?: string;
+  requirementId?: string;
 }
 
 export default function CourseCard({
@@ -25,16 +25,17 @@ export default function CourseCard({
   creditWeight,
   minGrade,
   requirementType,
-  requirementId,
   existingGrade,
   userId,
   gradeId,
   status,
+  requirementId,
 }: CourseCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [grade, setGrade] = useState(existingGrade || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasGrade, setHasGrade] = useState(!!existingGrade);
+  const [courseStatus, setCourseStatus] = useState(status || "");
   const [isInProgress, setIsInProgress] = useState(status === "in-progress");
   const router = useRouter();
   
@@ -42,6 +43,7 @@ export default function CourseCard({
   useEffect(() => {
     setGrade(existingGrade || "");
     setHasGrade(!!existingGrade);
+    setCourseStatus(status || "");
     setIsInProgress(status === "in-progress");
   }, [existingGrade, status]);
 
@@ -65,17 +67,11 @@ export default function CourseCard({
       toast.error("Please enter a valid grade (0-100 for numeric grades)");
       return;
     }
-
-    // Validate requirementId is present
-    if (!requirementId) {
-      toast.error("Cannot save grade: Missing requirement ID");
-      return;
-    }
     
     setIsSubmitting(true);
     
     try {
-      // Use the server action to save the grade with requirementId
+      // Use the server action to save the grade
       const result = await saveGradeAction(courseCode, grade, userId, requirementId);
       
       if (result.error) {
@@ -84,6 +80,8 @@ export default function CourseCard({
         toast.success("Grade saved successfully");
         setIsEditing(false);
         setHasGrade(true);
+        // Update status to completed when grade is added
+        setCourseStatus("completed");
         // Refresh the page data
         router.refresh();
       }
@@ -133,8 +131,7 @@ export default function CourseCard({
           console.log("Force delete method failed, trying empty grade method:", result.error);
           
           // Final fallback: use saveGradeAction with empty string to clear the grade
-          // Pass the requirementId to ensure we're targeting the specific course requirement
-          result = await saveGradeAction(courseCode, "", userId, requirementId);
+          result = await saveGradeAction(courseCode, "", userId);
         }
       }
       
@@ -144,6 +141,7 @@ export default function CourseCard({
         // Update local state immediately
         setGrade("");
         setHasGrade(false);
+        setCourseStatus("");
         
         toast.success("Grade deleted successfully");
         
@@ -161,11 +159,6 @@ export default function CourseCard({
   };
 
   const handleToggleInProgress = async () => {
-    if (!requirementId) {
-      toast.error("Cannot update status: Missing requirement ID");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       const result = await toggleCourseStatusAction(courseCode, userId, requirementId);
@@ -173,23 +166,12 @@ export default function CourseCard({
       if ('error' in result && result.error) {
         toast.error(result.error);
       } else {
-        // Use the status from the server response if available, otherwise toggle the current state
-        const newStatus = result.isInProgress !== undefined ? Boolean(result.isInProgress) : !isInProgress;
-        setIsInProgress(newStatus);
-        
-        if ('message' in result) {
-          toast.success(result.message);
-        } else {
-          toast.success(newStatus 
-            ? `${courseCode} added to in-progress courses` 
-            : `${courseCode} removed from in-progress courses`);
-        }
-        
-        // Refresh the page data
+        const newStatus = !isInProgress ? "in-progress" : "";
+        setIsInProgress(!isInProgress);
+        setCourseStatus(newStatus);
         router.refresh();
       }
     } catch (error) {
-      console.error("Error updating course status:", error);
       toast.error("Failed to update course status");
     } finally {
       setIsSubmitting(false);
@@ -197,13 +179,10 @@ export default function CourseCard({
   };
 
   const getStatusColor = () => {
-    if (isInProgress) return "border-blue-400 bg-blue-50";
-    if (!existingGrade) return "border-gray-200 bg-white";
+    // First priority: Check status field from database
+    if (courseStatus === "in-progress") return "border-blue-400 bg-blue-50";
     
-    const gradeToCheck = existingGrade;
-    const numericGrade = parseFloat(gradeToCheck);
-    
-    // Convert letter grades to numeric values for comparison
+    // Helper function to convert letter grades to numeric values
     const getNumericValue = (grade: string) => {
       const letterGrades: { [key: string]: number } = {
         'A+': 90, 'A': 85, 'A-': 80,
@@ -214,36 +193,40 @@ export default function CourseCard({
       };
       return letterGrades[grade.toUpperCase()] || 0;
     };
-
-    // If there's a minimum grade requirement
-    if (minGrade) {
-      const studentGradeValue = isNaN(numericGrade) ? getNumericValue(gradeToCheck) : numericGrade;
-      const minGradeValue = isNaN(parseFloat(minGrade)) ? getNumericValue(minGrade) : parseFloat(minGrade);
+    
+    // Helper function to check if a grade meets requirements
+    const isPassingGrade = (gradeValue: string): boolean => {
+      if (!gradeValue) return false;
       
-      return studentGradeValue >= minGradeValue 
+      const numericGrade = parseFloat(gradeValue);
+      const gradeNumericValue = isNaN(numericGrade) ? getNumericValue(gradeValue) : numericGrade;
+      
+      // If there's a minimum grade requirement, use that
+      if (minGrade) {
+        const minGradeValue = isNaN(parseFloat(minGrade)) ? getNumericValue(minGrade) : parseFloat(minGrade);
+        return gradeNumericValue >= minGradeValue;
+      }
+      
+      // Otherwise use 50 as the passing threshold
+      return gradeNumericValue >= 50;
+    };
+    
+    // If no grade exists and no specific status, use default styling
+    if (!existingGrade && !courseStatus) return "border-gray-200 bg-white";
+    
+    // If there's a grade (regardless if status is "completed" or not specified)
+    if (existingGrade) {
+      return isPassingGrade(existingGrade) 
         ? "border-green-400 bg-green-50" 
         : "border-red-400 bg-red-50";
     }
     
-    // If no minimum grade requirement, check if passing (>= 50)
-    if (isNaN(numericGrade)) {
-      // For letter grades
-      const numericValue = getNumericValue(gradeToCheck);
-      return numericValue >= 50 
-        ? "border-green-400 bg-green-50" 
-        : "border-red-400 bg-red-50";
-    } else {
-      // For numeric grades
-      return numericGrade >= 50 
-        ? "border-green-400 bg-green-50" 
-        : "border-red-400 bg-red-50";
-    }
+    // Default color if none of the above conditions are met
+    return "border-gray-200 bg-white";
   };
 
   return (
-    <div className={`rounded-lg shadow-md p-4 border ${getStatusColor()} transition-all hover:shadow-lg`}
-        data-requirement-id={requirementId}
-    >
+    <div className={`rounded-lg shadow-md p-4 border ${getStatusColor()} transition-all hover:shadow-lg`}>
       <div className="flex flex-col h-full">
         <div className="flex justify-between items-start">
           <div>

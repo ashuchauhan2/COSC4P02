@@ -78,6 +78,7 @@ export default function CourseList({ courses, grades, decryptedGrades, userId }:
                   userId={userId}
                   gradeId={gradeRecord?.id}
                   requirementId={course.id}
+                  status={gradeRecord?.status}
                 />
               );
             })}
