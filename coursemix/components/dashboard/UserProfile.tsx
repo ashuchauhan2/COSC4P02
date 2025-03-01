@@ -8,9 +8,13 @@ interface UserProfileProps {
   userProfile: UserProfileType;
   program: Program;
   termInfo: ExtendedTermInfo;
+  academicProgress?: {
+    currentAverage: number;
+    completedCourses: number;
+  };
 }
 
-export default function UserProfile({ userProfile, program, termInfo }: UserProfileProps) {
+export default function UserProfile({ userProfile, program, termInfo, academicProgress }: UserProfileProps) {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 flex flex-col">
       {/* Profile Section */}
@@ -118,11 +122,17 @@ export default function UserProfile({ userProfile, program, termInfo }: UserProf
         <div className="bg-gray-50 rounded-md p-3 space-y-2">
           <div className="flex justify-between">
             <span className="text-xs text-gray-500">Current Average</span>
-            <span className="text-xs font-medium text-gray-700">N/A%</span>
+            <span className="text-xs font-medium text-gray-700">
+              {academicProgress?.currentAverage 
+                ? `${academicProgress.currentAverage.toFixed(1)}%` 
+                : 'N/A'}
+            </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-xs text-gray-500">Credits Completed</span>
-            <span className="text-xs font-medium text-gray-700">0</span>
+            <span className="text-xs text-gray-500">Courses Completed</span>
+            <span className="text-xs font-medium text-gray-700">
+              {academicProgress?.completedCourses ?? 0}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-xs text-gray-500">Courses This Term</span>
@@ -140,10 +150,10 @@ export default function UserProfile({ userProfile, program, termInfo }: UserProf
           My Courses
         </Link>
         <Link 
-          href="/protected/grades" 
+          href="/protected/academic-progress" 
           className="block w-full text-center py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium text-gray-700 transition-colors"
         >
-          Grades
+          Academic Progress
         </Link>
         <Link 
           href="/protected/course-registration" 
