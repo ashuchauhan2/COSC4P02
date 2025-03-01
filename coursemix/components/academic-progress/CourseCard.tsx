@@ -226,22 +226,22 @@ export default function CourseCard({
   };
 
   return (
-    <div className={`rounded-xl shadow-sm p-6 border ${getStatusColor()} transition-all hover:shadow-md group`}>
-      <div className="flex flex-col h-full min-h-[150px]">
+    <div className={`rounded-lg shadow-sm p-4 border ${getStatusColor()} transition-all hover:shadow-md group`}>
+      <div className="flex flex-col h-full min-h-[120px]">
         <div className="flex justify-between items-start">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="font-bold text-gray-800 text-lg">{courseCode}</h3>
+            <div className="flex items-center gap-1 mb-1">
+              <h3 className="font-bold text-gray-800">{courseCode}</h3>
               {!isInProgress && !hasGrade && (
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleToggleInProgress}
                   disabled={isSubmitting}
-                  className="h-6 w-6 text-blue-600 hover:text-blue-800 hover:bg-blue-100 p-0.5 rounded-full opacity-80 hover:opacity-100"
+                  className="h-5 w-5 text-blue-600 hover:text-blue-800 hover:bg-blue-100 p-0.5 rounded-full opacity-80 hover:opacity-100"
                   title="Add to Progress"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3 w-3" />
                 </Button>
               )}
               {isInProgress && (
@@ -250,24 +250,24 @@ export default function CourseCard({
                   size="icon"
                   onClick={handleToggleInProgress}
                   disabled={isSubmitting}
-                  className="h-6 w-6 text-red-600 hover:text-red-800 hover:bg-red-100 p-0.5 rounded-full opacity-80 hover:opacity-100"
+                  className="h-5 w-5 text-red-600 hover:text-red-800 hover:bg-red-100 p-0.5 rounded-full opacity-80 hover:opacity-100"
                   title="Remove from Progress"
                 >
-                  <Minus className="h-4 w-4" />
+                  <Minus className="h-3 w-3" />
                 </Button>
               )}
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-xs text-gray-600">
               <span className="font-medium">{creditWeight} credit{creditWeight !== 1 ? 's' : ''}</span>
               {minGrade && (
-                <span className="ml-2">
-                  • Min. grade: <span className="font-medium">{minGrade}</span>
+                <span className="ml-1">
+                  • Min: <span className="font-medium">{minGrade}</span>
                 </span>
               )}
               
               {requirementType && (
-                <div className="mt-2">
-                  <span className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-700 font-medium">
+                <div className="mt-1">
+                  <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700 font-medium">
                     {requirementType}
                   </span>
                 </div>
@@ -277,32 +277,32 @@ export default function CourseCard({
           
           {/* Show grade value in top right */}
           {hasGrade && existingGrade && !isEditing && (
-            <div className="text-xl font-bold px-3 py-1.5 rounded-lg bg-white/80 shadow-sm border border-gray-100">
+            <div className="text-lg font-bold px-2 py-1 rounded-md bg-white/80 shadow-sm border border-gray-100">
               {existingGrade}
             </div>
           )}
         </div>
 
         {/* Grade editing and buttons at bottom */}
-        <div className="flex justify-end mt-auto pt-5">
+        <div className="flex justify-end mt-auto pt-3">
           {isEditing ? (
-            <div className="flex flex-col items-end gap-3 w-full">
+            <div className="flex flex-col items-end gap-2 w-full">
               <Input
                 type="text"
                 value={grade}
                 onChange={(e) => setGrade(e.target.value)}
                 placeholder="Enter grade"
-                className="w-full sm:w-40 text-center focus:ring-2 focus:ring-blue-400"
+                className="w-full sm:w-32 text-center focus:ring-2 focus:ring-blue-400 h-8 text-sm"
                 style={{ textAlign: 'center' }}
                 autoFocus
               />
-              <div className="flex gap-2">
+              <div className="flex gap-1">
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => setIsEditing(false)}
                   disabled={isSubmitting}
-                  className="border-gray-300"
+                  className="border-gray-300 h-7 text-xs"
                 >
                   Cancel
                 </Button>
@@ -310,20 +310,21 @@ export default function CourseCard({
                   size="sm"
                   onClick={handleSaveGrade}
                   disabled={isSubmitting}
+                  className="h-7 text-xs"
                 >
                   Save
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               {hasGrade && existingGrade ? (
                 <>
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={() => setIsEditing(true)}
-                    className="px-4 opacity-70 group-hover:opacity-100 transition-opacity border-gray-300"
+                    className="px-3 opacity-70 group-hover:opacity-100 transition-opacity border-gray-300 h-7 text-xs"
                   >
                     Edit
                   </Button>
@@ -331,7 +332,7 @@ export default function CourseCard({
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200 px-4 opacity-70 group-hover:opacity-100 transition-opacity"
+                      className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200 px-3 opacity-70 group-hover:opacity-100 transition-opacity h-7 text-xs"
                       onClick={handleDeleteGrade}
                       disabled={isSubmitting}
                     >
@@ -344,7 +345,7 @@ export default function CourseCard({
                   variant="outline" 
                   size="sm"
                   onClick={() => setIsEditing(true)}
-                  className="px-4 border-gray-300"
+                  className="px-3 border-gray-300 h-7 text-xs"
                 >
                   Add Grade
                 </Button>
