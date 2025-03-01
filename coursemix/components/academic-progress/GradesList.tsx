@@ -320,8 +320,10 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
   const totalCourses = completedCourses + inProgressCourses;
   const remainingCourses = Math.max(0, 40 - totalCourses);
   
-  // Calculate percentage complete
+  // Calculate percentage complete and in progress
   const percentComplete = Math.min(100, Math.round((completedCourses / 40) * 100));
+  const percentInProgress = Math.min(100 - percentComplete, Math.round((inProgressCourses / 40) * 100));
+  const totalPercentage = percentComplete + percentInProgress;
   
   return (
     <div className="space-y-8">
@@ -369,13 +371,28 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
         <h2 className="text-2xl font-semibold mb-4 text-gray-800">Degree Progress</h2>
         
         <div className="flex items-center mb-4">
-          <div className="w-full bg-gray-200 rounded-full h-4 mr-4">
-            <div 
-              className="bg-teal-600 h-4 rounded-full transition-all duration-500 ease-in-out" 
-              style={{ width: `${percentComplete}%` }}
-            ></div>
+          <div className="w-full bg-gray-200 rounded-full h-4 mr-4 overflow-hidden">
+            <div className="flex h-4">
+              <div 
+                className={`bg-teal-600 h-4 transition-all duration-500 ease-in-out ${inProgressCourses === 0 ? 'rounded-full' : 'rounded-l-full'}`}
+                style={{ width: `${percentComplete}%` }}
+              ></div>
+              {inProgressCourses > 0 && (
+                <div 
+                  className="bg-blue-500 h-4 transition-all duration-500 ease-in-out rounded-r-full" 
+                  style={{ width: `${percentInProgress}%` }}
+                ></div>
+              )}
+            </div>
           </div>
-          <span className="text-sm font-medium text-gray-600 whitespace-nowrap">{percentComplete}% Complete</span>
+          <div className="text-sm font-medium text-gray-600 whitespace-nowrap">
+            {percentComplete}% Complete
+            {inProgressCourses > 0 && (
+              <span className="text-blue-600 ml-1">
+                (+{percentInProgress}% In Progress)
+              </span>
+            )}
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
