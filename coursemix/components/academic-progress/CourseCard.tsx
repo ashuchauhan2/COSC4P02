@@ -215,55 +215,64 @@ export default function CourseCard({
 
   return (
     <div className={`rounded-lg shadow-md p-4 border ${getStatusColor()} transition-all hover:shadow-lg`}>
-      <div className="flex justify-between items-start">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-gray-800">{courseCode}</h3>
-            {!isInProgress && !hasGrade && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleToggleInProgress}
-                disabled={isSubmitting}
-                className="h-6 w-6 text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5"
-                title="Add to Progress"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            )}
-            {isInProgress && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleToggleInProgress}
-                disabled={isSubmitting}
-                className="h-6 w-6 text-red-600 hover:text-red-800 hover:bg-red-50 p-0.5"
-                title="Remove from Progress"
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          <div className="text-sm text-gray-600 mt-1">
-            <span className="font-medium">{creditWeight} credits</span>
-            {minGrade && (
-              <span className="ml-2">
-                • Min. grade: <span className="font-medium">{minGrade}</span>
-              </span>
-            )}
-
-            
-            {requirementType && (
-              <div className="mt-1">
-                <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-700">
-                  {requirementType}
+      <div className="flex flex-col h-full">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-gray-800">{courseCode}</h3>
+              {!isInProgress && !hasGrade && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleInProgress}
+                  disabled={isSubmitting}
+                  className="h-6 w-6 text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5"
+                  title="Add to Progress"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
+              {isInProgress && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleInProgress}
+                  disabled={isSubmitting}
+                  className="h-6 w-6 text-red-600 hover:text-red-800 hover:bg-red-50 p-0.5"
+                  title="Remove from Progress"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="text-sm text-gray-600 mt-1">
+              <span className="font-medium">{creditWeight} credits</span>
+              {minGrade && (
+                <span className="ml-2">
+                  • Min. grade: <span className="font-medium">{minGrade}</span>
                 </span>
-              </div>
-            )}
+              )}
+              
+              {requirementType && (
+                <div className="mt-1">
+                  <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-700">
+                    {requirementType}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
+          
+          {/* Show grade value in top right */}
+          {hasGrade && existingGrade && !isEditing && (
+            <div className="text-xl font-bold">
+              {existingGrade}
+            </div>
+          )}
         </div>
-        
-        <div className="text-right flex flex-col items-end gap-2">
+
+        {/* Grade editing and buttons at bottom */}
+        <div className="flex justify-end mt-4">
           {isEditing ? (
             <div className="flex flex-col items-end gap-2">
               <Input
@@ -292,33 +301,28 @@ export default function CourseCard({
               </div>
             </div>
           ) : (
-            <>
+            <div className="flex gap-2">
               {hasGrade && existingGrade ? (
-                <div>
-                  <div className="text-xl font-bold">
-                    {existingGrade}
-                  </div>
-                  <div className="flex gap-2 mt-1 justify-end">
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Edit
+                  </Button>
+                  {gradeId && (
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => setIsEditing(true)}
+                      className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200"
+                      onClick={handleDeleteGrade}
+                      disabled={isSubmitting}
                     >
-                      Edit
+                      Delete
                     </Button>
-                    {gradeId && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200"
-                        onClick={handleDeleteGrade}
-                        disabled={isSubmitting}
-                      >
-                        Delete
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                  )}
+                </>
               ) : (
                 <Button 
                   variant="outline" 
@@ -328,7 +332,7 @@ export default function CourseCard({
                   Add Grade
                 </Button>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
