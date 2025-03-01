@@ -38,8 +38,26 @@ export default function CourseCard({
     setHasGrade(!!existingGrade);
   }, [existingGrade]);
 
+  const validateGrade = (gradeValue: string): boolean => {
+    // Handle numeric grades
+    const numericGrade = parseFloat(gradeValue);
+    if (!isNaN(numericGrade)) {
+      return numericGrade >= 0 && numericGrade <= 100;
+    }
+    
+    // Handle letter grades (always valid since they're predefined)
+    const validLetterGrades = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'];
+    return validLetterGrades.includes(gradeValue.toUpperCase());
+  };
+
   const handleSaveGrade = async () => {
     if (!grade.trim()) return;
+    
+    // Validate the grade before saving
+    if (!validateGrade(grade)) {
+      toast.error("Please enter a valid grade (0-100 for numeric grades)");
+      return;
+    }
     
     setIsSubmitting(true);
     
