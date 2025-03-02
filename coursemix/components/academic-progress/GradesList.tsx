@@ -320,8 +320,10 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
   const totalCourses = completedCourses + inProgressCourses;
   const remainingCourses = Math.max(0, 40 - totalCourses);
   
-  // Calculate percentage complete
+  // Calculate percentage complete and in progress
   const percentComplete = Math.min(100, Math.round((completedCourses / 40) * 100));
+  const percentInProgress = Math.min(100 - percentComplete, Math.round((inProgressCourses / 40) * 100));
+  const totalPercentage = percentComplete + percentInProgress;
   
   return (
     <div className="space-y-8">
@@ -369,13 +371,28 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
         <h2 className="text-2xl font-semibold mb-4 text-gray-800">Degree Progress</h2>
         
         <div className="flex items-center mb-4">
-          <div className="w-full bg-gray-200 rounded-full h-4 mr-4">
-            <div 
-              className="bg-teal-600 h-4 rounded-full transition-all duration-500 ease-in-out" 
-              style={{ width: `${percentComplete}%` }}
-            ></div>
+          <div className="w-full bg-gray-200 rounded-full h-4 mr-4 overflow-hidden">
+            <div className="flex h-4">
+              <div 
+                className={`bg-teal-600 h-4 transition-all duration-500 ease-in-out ${inProgressCourses === 0 ? 'rounded-full' : 'rounded-l-full'}`}
+                style={{ width: `${percentComplete}%` }}
+              ></div>
+              {inProgressCourses > 0 && (
+                <div 
+                  className="bg-blue-500 h-4 transition-all duration-500 ease-in-out rounded-r-full" 
+                  style={{ width: `${percentInProgress}%` }}
+                ></div>
+              )}
+            </div>
           </div>
-          <span className="text-sm font-medium text-gray-600 whitespace-nowrap">{percentComplete}% Complete</span>
+          <div className="text-sm font-medium text-gray-600 whitespace-nowrap">
+            {percentComplete}% Complete
+            {inProgressCourses > 0 && (
+              <span className="text-blue-600 ml-1">
+                (+{percentInProgress}% In Progress)
+              </span>
+            )}
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -423,151 +440,6 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
           </div>
         </div>
       </div>
-      
-      {/* Grades by Year */}
-      {sortedYears.length > 0 &&
-        sortedYears.map(year => {
-          const yearHasGrades = ['Fall', 'Winter', 'Spring', 'Summer'].some(
-            term => {
-              const termGrades = groupedGrades[year][term as TermType];
-              return termGrades && termGrades.length > 0;
-            }
-          );
-
-          if (!yearHasGrades) return null;
-
-          return (
-            <div key={year} className="bg-white rounded-lg shadow-md p-6">
-              <div className="space-y-6">
-                {['Fall', 'Winter', 'Spring', 'Summer'].map(term => {
-                  const termGrades = groupedGrades[year][term as TermType];
-                  if (!termGrades || termGrades.length === 0) return null;
-                  
-                  const termKey = `${year}-${term}`;
-                  
-                  return (
-                    <div key={term} className="border-t pt-4">
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-xl font-medium text-gray-700">{term} Term</h3>
-                        {termGPAs[termKey] && (
-                          <div className="bg-gray-100 px-3 py-1 rounded-md">
-                            <span className="text-sm text-gray-600">Term GPA: </span>
-                            <span className={`font-medium ${termGPAs[termKey] >= 3.0 ? 'text-green-600' : termGPAs[termKey] >= 2.0 ? 'text-blue-600' : 'text-red-600'}`}>
-                              {termGPAs[termKey].toFixed(2)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                          <thead>
-                            <tr>
-                              <th className="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Course Code
-                              </th>
-                              <th className="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Grade
-                              </th>
-                              <th className="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status
-                              </th>
-                              <th className="px-4 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {termGrades.map(grade => (
-                              <tr key={grade.id}>
-                                <td className="px-4 py-3 whitespace-nowrap">
-                                  <div className="text-sm font-medium text-gray-900">{grade.course_code}</div>
-                                </td>
-                                <td className="px-4 py-3 whitespace-nowrap">
-                                  {editGradeId === grade.id ? (
-                                    <input
-                                      type="text"
-                                      value={editGradeValue}
-                                      onChange={(e) => {
-                                        // Validate numeric input
-                                        const value = e.target.value;
-                                        if (value === '' || (!isNaN(Number(value)) && Number(value) <= 100) || isNaN(Number(value))) {
-                                          setEditGradeValue(e.target.value);
-                                        }
-                                      }}
-                                      className="w-24 px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500"
-                                    />
-                                  ) : (
-                                    <div className="text-sm font-medium text-gray-900">
-                                      {decryptedGrades[grade.id] || 'N/A'}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 whitespace-nowrap">
-                                  {editGradeId === grade.id ? (
-                                    <select
-                                      value={editStatus}
-                                      onChange={(e) => setEditStatus(e.target.value)}
-                                      className="w-32 px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500"
-                                      disabled={true} /* Disable status selection since we're always setting to completed */
-                                    >
-                                      <option value="completed">Completed</option>
-                                    </select>
-                                  ) : (
-                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[grade.status] || 'bg-gray-100 text-gray-800'}`}>
-                                      {grade.status.charAt(0).toUpperCase() + grade.status.slice(1)}
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                                  {editGradeId === grade.id ? (
-                                    <div className="flex space-x-2 justify-end">
-                                      <button
-                                        onClick={handleSaveEdit}
-                                        disabled={isSubmitting}
-                                        className="text-teal-600 hover:text-teal-900"
-                                      >
-                                        Save
-                                      </button>
-                                      <button
-                                        onClick={handleCancelEdit}
-                                        disabled={isSubmitting}
-                                        className="text-gray-600 hover:text-gray-900"
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <div className="flex space-x-2 justify-end">
-                                      <button
-                                        onClick={() => handleStartEdit(grade)}
-                                        className="text-teal-600 hover:text-teal-900"
-                                      >
-                                        Edit
-                                      </button>
-                                      <button
-                                        onClick={() => handleDelete(grade.id)}
-                                        disabled={isSubmitting}
-                                        className="text-red-600 hover:text-red-900"
-                                      >
-                                        Delete
-                                      </button>
-                                    </div>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })
-      }
     </div>
   );
-} 
+}

@@ -1,36 +1,39 @@
+'use client';
+
+import { useState } from 'react';
 import CourseCard from "./CourseCard";
 
 interface Course {
+  id: string;
+  program_id: number;
+  year: number;
   course_code: string;
   credit_weight: number;
-  min_grade?: string;
-  requirement_type?: string;
-  year: number;
+  requirement_type: string;
+  min_grade?: number;
 }
 
 interface StudentGrade {
   id: string;
   user_id: string;
   course_code: string;
+  requirement_id?: string;
   grade: string;
-  year: number;
   term: string;
+  year: number;
   status: string;
+  created_at: string;
+  updated_at: string;
 }
 
-interface CourseListProps {
+type CourseListProps = {
   courses: Course[];
   grades: StudentGrade[];
   decryptedGrades: { [id: string]: string };
   userId: string;
-}
+};
 
-export default function CourseList({
-  courses,
-  grades,
-  decryptedGrades,
-  userId,
-}: CourseListProps) {
+export default function CourseList({ courses, grades, decryptedGrades, userId }: CourseListProps) {
   // Organize courses by year
   const coursesByYear = courses.reduce<{ [year: number]: Course[] }>(
     (acc, course) => {
@@ -44,19 +47,10 @@ export default function CourseList({
     {}
   );
 
-  // Create a mapping of course codes to their grades and statuses
-  const courseGrades: { [courseCode: string]: string } = {};
-  const courseGradeIds: { [courseCode: string]: string } = {};
-  const courseStatuses: { [courseCode: string]: string } = {};
-  
-  grades.forEach((grade) => {
-    const decryptedGrade = decryptedGrades[grade.id];
-    if (decryptedGrade) {
-      courseGrades[grade.course_code] = decryptedGrade;
-      courseGradeIds[grade.course_code] = grade.id;
-    }
-    courseStatuses[grade.course_code] = grade.status;
-  });
+  // Find a grade for a specific requirement
+  const findGradeForRequirement = (requirementId: string) => {
+    return grades.find(grade => grade.requirement_id === requirementId);
+  };
 
   const years = Object.keys(coursesByYear)
     .map(Number)
@@ -68,22 +62,29 @@ export default function CourseList({
         <div key={year} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Year {year}</h2>
           <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {coursesByYear[year].map((course) => (
-              <CourseCard
-                key={course.course_code}
-                courseCode={course.course_code}
-                creditWeight={course.credit_weight}
-                minGrade={course.min_grade}
-                requirementType={course.requirement_type}
-                existingGrade={courseGrades[course.course_code]}
-                gradeId={courseGradeIds[course.course_code]}
-                userId={userId}
-                status={courseStatuses[course.course_code]}
-              />
-            ))}
+            {coursesByYear[year].map((course) => {
+              // Find grade for this specific requirement
+              const gradeRecord = findGradeForRequirement(course.id);
+              const gradeDisplay = gradeRecord ? decryptedGrades[gradeRecord.id] : '';
+              
+              return (
+                <CourseCard
+                  key={course.id}
+                  courseCode={course.course_code}
+                  creditWeight={course.credit_weight}
+                  minGrade={course.min_grade?.toString()}
+                  requirementType={course.requirement_type}
+                  existingGrade={gradeDisplay}
+                  userId={userId}
+                  gradeId={gradeRecord?.id}
+                  requirementId={course.id}
+                  status={gradeRecord?.status}
+                />
+              );
+            })}
           </div>
         </div>
       ))}
     </div>
   );
-} 
+}
