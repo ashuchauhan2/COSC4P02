@@ -149,13 +149,13 @@ export default function Timetable({ activeCourses }: TimetableProps) {
   const hasOnlineCourses = onlineCourses.length > 0;
 
   if (!isClient) {
-    return <div className="w-full h-full flex items-center justify-center">Loading...</div>;
+    return <div className="w-full h-[calc(100vh-8rem)] flex items-center justify-center">Loading...</div>;
   }
 
   // Early return for empty state
   if (activeCourses.length === 0) {
     return (
-      <div className="w-full h-full max-w-5xl mx-auto p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col items-center justify-center">
+      <div className="w-full h-[calc(100vh-8rem)] max-w-5xl mx-auto p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col items-center justify-center">
         <svg className="w-16 h-16 mb-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
@@ -166,12 +166,12 @@ export default function Timetable({ activeCourses }: TimetableProps) {
   }
 
   return (
-    <div className="w-full h-full max-w-5xl mx-auto p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+    <div className="w-full h-[calc(100vh-8rem)] max-w-5xl mx-auto p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
       <div className="flex flex-col h-full">
         <div className="grid grid-cols-6 flex-grow">
           {/* Time Labels */}
           <div className="relative border-r border-gray-200 dark:border-gray-700">
-            <div className="h-12 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700"></div>
+            <div className="h-12 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"></div>
             <div className="relative h-[calc(100%-3rem)]">
               {Array.from({ length: HOURS_COUNT }, (_, i) => {
                 const hour = TIMETABLE_START + i;
@@ -212,8 +212,8 @@ export default function Timetable({ activeCourses }: TimetableProps) {
             return (
               <div key={day} className="relative border-r border-gray-200 dark:border-gray-700">
                 {/* Day Header */}
-                <div className="h-12 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                <div className="h-12 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                     <span className="hidden sm:inline">{day}</span>
                     <span className="sm:hidden">{dayAbbreviations[day as keyof typeof dayAbbreviations]}</span>
                   </span>
@@ -233,7 +233,7 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                         style={{ top: `${(i / HOURS_COUNT) * 100}%` }}
                       />
                       <div
-                        className="absolute w-full border-t border-gray-100 dark:border-gray-800 border-dashed"
+                        className="absolute w-full border-t border-gray-100 dark:border-gray-700 border-dashed"
                         style={{ top: `${((i + 0.5) / HOURS_COUNT) * 100}%` }}
                       />
                     </div>
@@ -247,74 +247,92 @@ export default function Timetable({ activeCourses }: TimetableProps) {
 
                   {/* Pre-8am shaded area with "No Classes" text */}
                   <div
-                    className="absolute w-full bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-center"
+                    className="absolute w-full bg-gray-50/50 dark:bg-gray-700/50 flex items-center justify-center"
                     style={{
                       top: 0,
                       height: `${(1 / HOURS_COUNT) * 100}%`,
                     }}
                   >
-                    <span className="text-[10px] text-gray-600 font-bold">
+                    <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold">
                       <p className="">No Classes</p>
                     </span>
                   </div>
 
                   {/* Course Blocks */}
-                  {coursesForDay.map((course, index) => {
+                  {coursesForDay.map((course) => {
                     const timeObj = parseTime(course.class_time);
+                    
+                    if (!timeObj) {
+                      console.log(`No time object for ${course.course_code} - ${course.class_time}`);
+                      return null;
+                    }
+                    
                     const { top, height } = calculateCoursePosition(timeObj);
                     
-                    // Debug log for each course position
-                    console.log(`Rendering ${course.course_code} at top=${top}%, height=${height}%`);
+                    if (top === 0 && height === 0) {
+                      console.log(`Zero position for ${course.course_code}: top=${top}, height=${height}`);
+                      return null;
+                    }
                     
-                    // Determine background color class based on course type/index
-                    const colorClasses = [
-                      "bg-teal-100 dark:bg-teal-700 text-teal-800 dark:text-teal-100 border-teal-200 dark:border-teal-600",
-                      "bg-blue-100 dark:bg-blue-700 text-blue-800 dark:text-blue-100 border-blue-200 dark:border-blue-600",
-                      "bg-purple-100 dark:bg-purple-700 text-purple-800 dark:text-purple-100 border-purple-200 dark:border-purple-600",
-                      "bg-rose-100 dark:bg-rose-700 text-rose-800 dark:text-rose-100 border-rose-200 dark:border-rose-600",
-                      "bg-amber-100 dark:bg-amber-700 text-amber-800 dark:text-amber-100 border-amber-200 dark:border-amber-600",
-                    ];
+                    // Generate a deterministic color based on course code
+                    const colorHash = course.course_code
+                      .split("")
+                      .reduce((acc, char) => char.charCodeAt(0) + acc, 0);
+                    const hue = colorHash % 360;
                     
-                    const colorClassIndex = index % colorClasses.length;
-                    const colorClass = colorClasses[colorClassIndex];
-                    
-                    return timeObj && top >= 0 && height > 0 ? (
+                    console.log(`Rendering course ${course.course_code} at top=${top}%, height=${height}%`);
+
+                    return (
                       <div
-                        key={`${course.id}-${day}`}
-                        className={`absolute w-[95%] left-[2.5%] ${colorClass} rounded-md border p-1 overflow-hidden shadow-sm transition-opacity hover:opacity-90`}
+                        key={`${course.id}-${course.enrollment_id}`}
+                        className="absolute rounded-md overflow-hidden shadow-sm backdrop-blur-sm 
+                                  border-l-4 w-[95%] mx-auto left-0 right-0
+                                  transition-transform hover:scale-[1.02] cursor-pointer
+                                  flex flex-col dark:shadow-gray-900"
                         style={{
                           top: `${top}%`,
                           height: `${height}%`,
-                          minHeight: "1.5rem",
+                          backgroundColor: `hsla(${hue}, 70%, 85%, 0.9)`,
+                          borderColor: `hsla(${hue}, 70%, 60%, 1)`,
+                          padding: height < 8 ? '1px 3px' : '3px 4px',
+                          fontSize: height < 10 ? '0.65rem' : '0.75rem',
                         }}
-                        title={`${course.course_code}`}
                       >
-                        <div className="flex flex-col h-full overflow-hidden">
-                          <span className="text-xs font-bold truncate">
-                            {course.course_code}
-                          </span>
-                          <div className="text-[0.65rem] truncate">
-                            {course.class_time}
-                          </div>
-                          {height > 5 && (
-                            <div className="text-[0.65rem] line-clamp-2 mt-auto">
-                              {course.instructor || "Location TBA"}
-                            </div>
-                          )}
+                        <div className="font-bold truncate text-gray-800 dark:text-gray-900 leading-tight">
+                          {course.course_code}
                         </div>
+                        
+                        {/* Always show course type */}
+                        <div className="truncate text-gray-600 dark:text-gray-700 leading-tight" 
+                             style={{ fontSize: height < 10 ? '0.6rem' : '0.65rem' }}>
+                          {course.class_type}
+                        </div>
+
+                        {/* Always show instructor but adjust for small blocks */}
+                        {course.instructor && (
+                          <div className="truncate text-gray-500 dark:text-gray-600 mt-auto leading-tight" 
+                               style={{ fontSize: height < 10 ? '0.55rem' : '0.6rem' }}>
+                            {height <= 10 
+                              ? course.instructor.split(",")[0] // Just last name for very small blocks
+                              : course.instructor.split(",").length > 1 
+                                ? `${course.instructor.split(",")[0]}` // Just last name for medium blocks
+                                : course.instructor // Full name for larger blocks
+                            }
+                          </div>
+                        )}
                       </div>
-                    ) : null;
+                    );
                   })}
 
                   {/* Post-10pm shaded area with "No Classes" text */}
                   <div
-                    className="absolute w-full bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-center"
+                    className="absolute w-full bg-gray-50/50 dark:bg-gray-700/50 flex items-center justify-center"
                     style={{
                       bottom: 0,
                       height: `${(1 / HOURS_COUNT) * 100}%`,
                     }}
                   >
-                    <span className="text-[10px] text-gray-600 font-bold">
+                    <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold">
                       <p className="">No Classes</p>
                     </span>
                   </div>
@@ -327,27 +345,50 @@ export default function Timetable({ activeCourses }: TimetableProps) {
 
         {/* Online Courses Section */}
         {hasOnlineCourses && (
-          <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">Online Courses</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {onlineCourses.map((course) => (
-                <div 
-                  key={course.id} 
-                  className="bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 rounded-md p-3 shadow-sm"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200">{course.course_code}</h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{course.instructor || "Instructor: TBA"}</p>
-                      <div className="mt-2 text-xs flex space-x-2">
-                        <span className="px-2 py-1 bg-indigo-100 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-200 rounded-full">
-                          {course.class_type || "Online"}
-                        </span>
-                      </div>
+          <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Online Courses
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {onlineCourses.map((course) => {
+                const colorHash = course.course_code
+                  .split("")
+                  .reduce((acc, char) => char.charCodeAt(0) + acc, 0);
+                const hue = colorHash % 360;
+
+                return (
+                  <div
+                    key={course.id || course.enrollment_id}
+                    className="p-2 rounded-md shadow-sm backdrop-blur-sm 
+                              border-l-4 transition-transform hover:scale-[1.02] cursor-pointer
+                              flex flex-col dark:shadow-gray-900"
+                    style={{
+                      backgroundColor: `hsla(${hue}, 70%, 85%, 0.9)`,
+                      borderColor: `hsla(${hue}, 70%, 60%, 1)`,
+                      minWidth: '180px',
+                    }}
+                  >
+                    <div className="font-bold text-gray-800 dark:text-gray-900">
+                      {course.course_code}
                     </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-700 mt-1">
+                      {course.class_type === "ASY" ? "Asynchronous Online" :
+                      course.class_type === "ASO" ? "Asynchronous Online, In-Person Exam" :
+                      course.class_type === "SYN" ? "Synchronous Online" :
+                      course.class_type === "SYO" ? "Synchronous Online, In-Person Exam" :
+                      course.class_type === "ONM" ? "Online Mixed" :
+                      course.class_type === "HYF" ? "Hybrid Flexible" :
+                      course.class_type === "PRO" ? "Project Course" :
+                      "Online"}
+                    </div>
+                    {course.instructor && (
+                      <div className="text-xs text-gray-500 dark:text-gray-600 mt-1">
+                        {course.instructor}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
