@@ -61,6 +61,15 @@ export default async function EditProfilePage({
       return redirect("/sign-in");
     }
 
+    // Fetch the current user profile to check if program changed
+    const { data: currentProfile } = await supabase
+      .from("user_profiles")
+      .select("program_id")
+      .eq("user_id", user.id)
+      .single();
+
+    const programChanged = currentProfile && currentProfile.program_id !== programId;
+
     // Update user profile in the database
     const { error } = await supabase
       .from("user_profiles")
@@ -79,10 +88,25 @@ export default async function EditProfilePage({
       return redirect(`/protected/profile/edit?message=${encodeURIComponent(error.message)}`);
     }
 
+    // If program changed, delete all grades for this user
+    if (programChanged) {
+      const { error: deleteError } = await supabase
+        .from("student_grades")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (deleteError) {
+        console.error("Error deleting grades:", deleteError);
+        return redirect(`/protected/profile?success=Profile updated successfully, but there was an error clearing your grades data.`);
+      }
+    }
+
     // Revalidate the profile page to refresh the data
     revalidatePath("/protected/profile");
     
-    return redirect("/protected/profile?success=Profile updated successfully");
+    return redirect(`/protected/profile?success=${programChanged 
+      ? "Profile updated successfully. Your grades have been cleared because you changed your program." 
+      : "Profile updated successfully"}`);
   };
 
   return (
@@ -159,6 +183,16 @@ export default async function EditProfilePage({
                   <label htmlFor="program_id" className="block text-sm font-medium text-gray-700 mb-1">
                     Program
                   </label>
+                  <div className="mb-2 bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-700">
+                    <div className="flex items-start">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span>
+                        <strong>Warning:</strong> Changing your program will delete all your existing grades. You will need to re-enter them after changing programs.
+                      </span>
+                    </div>
+                  </div>
                   <select
                     id="program_id"
                     name="program_id"
