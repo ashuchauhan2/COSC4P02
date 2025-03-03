@@ -64,23 +64,23 @@ export default function Register() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 px-4 py-8">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 px-4 py-8">
       <div className="w-full max-w-md space-y-8">
         {/* Logo/Brand Section */}
         <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
             Course Mix
           </h1>
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
             Create your account
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
             Join Course Mix to start planning your academic journey
           </p>
         </div>
 
         {/* Registration Form */}
-        <div className="mt-8 bg-white px-6 py-8 shadow-xl rounded-xl border border-gray-100">
+        <div className="mt-8 bg-white dark:bg-gray-800 px-6 py-8 shadow-xl rounded-xl border border-gray-100 dark:border-gray-700">
           <SearchParamsMessage />
           
           {error && (
@@ -95,7 +95,7 @@ export default function Register() {
             <div>
               <label 
                 htmlFor="email" 
-                className="block text-sm font-medium leading-6 text-gray-900"
+                className="block text-sm font-medium leading-6 text-gray-900 dark:text-gray-100"
               >
                 Email address
               </label>
@@ -106,39 +106,19 @@ export default function Register() {
                   type="email"
                   autoComplete="email"
                   required
-                  className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
-                  placeholder="Enter your email"
+                  className="h-11 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-teal-500 focus:ring-teal-500 dark:text-white dark:placeholder-gray-400"
+                  placeholder="Enter your Brock University email"
                 />
               </div>
-              <p className="mt-2 text-sm text-gray-500">
-                We'll send a verification code to this email
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Only @brocku.ca email addresses are allowed.
               </p>
-            </div>
-
-            <div className="flex items-center">
-              <input
-                id="terms"
-                name="terms"
-                type="checkbox"
-                required
-                className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-              />
-              <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-                I agree to the{" "}
-                <Link href="/terms" className="text-teal-600 hover:text-teal-500">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href="/privacy" className="text-teal-600 hover:text-teal-500">
-                  Privacy Policy
-                </Link>
-              </label>
             </div>
 
             <div>
               <Button 
                 type="submit" 
-                className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white transition-colors disabled:opacity-70"
+                className="w-full h-11 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white transition-colors"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -147,7 +127,7 @@ export default function Register() {
                     Sending verification...
                   </>
                 ) : (
-                  'Continue'
+                  "Sign up"
                 )}
               </Button>
             </div>
@@ -156,10 +136,10 @@ export default function Register() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-gray-200 dark:border-gray-700" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">
+                <span className="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400">
                   Already have an account?
                 </span>
               </div>
@@ -169,9 +149,9 @@ export default function Register() {
               <Link href="/sign-in" className="w-full block">
                 <Button 
                   variant="outline" 
-                  className="w-full h-11 border-gray-200 hover:border-teal-500 hover:text-teal-600 transition-colors"
+                  className="w-full h-11 border-gray-200 dark:border-gray-700 hover:border-teal-500 hover:text-teal-600 dark:hover:text-teal-400 transition-colors dark:text-gray-100"
                 >
-                  Sign in instead
+                  Sign in
                 </Button>
               </Link>
             </div>

@@ -110,23 +110,23 @@ export default async function MyCourses() {
   const displayTerm = `${currentTerm} ${currentYear}`;
 
   return (
-    <main className="bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen py-6">
+    <main className="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen py-6">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">My Courses</h1>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">My Courses</h1>
           <Link 
             href="/protected/course-registration" 
-            className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors shadow-sm hover:shadow-md"
+            className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 transition-colors shadow-sm hover:shadow-md"
           >
             Add Courses
           </Link>
         </div>
         
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
             {displayTerm} Courses
           </h2>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             Showing all courses you are currently enrolled in.
           </p>
         </div>
@@ -138,14 +138,14 @@ export default async function MyCourses() {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center border border-gray-200">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">No Courses Found</h3>
-            <p className="text-gray-600 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">No Courses Found</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               You are not currently enrolled in any courses for the {displayTerm} term.
             </p>
             <Link 
               href="/protected/course-registration" 
-              className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors shadow-sm hover:shadow-md"
+              className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 transition-colors shadow-sm hover:shadow-md"
             >
               Browse Courses
             </Link>

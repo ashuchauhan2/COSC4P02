@@ -38,21 +38,21 @@ export const Message = ({
   const getStyles = () => {
     switch (type) {
       case 'error':
-        return 'bg-red-50 text-red-700 border-red-200';
+        return 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800';
       case 'success':
-        return 'bg-green-50 text-green-700 border-green-200';
+        return 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800';
       case 'info':
       default:
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800';
     }
   };
   
   const getIcon = () => {
     switch (type) {
       case 'error':
-        return <XCircle className="w-5 h-5 text-red-500" />;
+        return <XCircle className="w-5 h-5 text-red-500 dark:text-red-400" />;
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />;
       default:
         return null;
     }
@@ -74,7 +74,7 @@ export const Message = ({
       </div>
       <button
         type="button"
-        className="text-gray-400 hover:text-gray-500 ml-auto"
+        className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400 ml-auto"
         onClick={handleDismiss}
         aria-label="Dismiss"
       >
