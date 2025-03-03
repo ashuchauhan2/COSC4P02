@@ -130,18 +130,52 @@ export default async function GradesPage() {
 
   const hasProgram = programData && programData.program_id;
   let programCourses = [];
+  let isCoopProgram = false;
+  let programInfo = null;
 
-  // Get all courses that are part of the user's program
+  // Get program information and requirements
   if (hasProgram) {
+    // Get program information
+    const { data: program, error: programError } = await supabase
+      .from("programs")
+      .select("*")
+      .eq("id", programData.program_id)
+      .single();
+    
+    if (programError) {
+      console.error("Error fetching program info:", programError);
+    } else {
+      programInfo = program;
+      // Check if this is a co-op program
+      isCoopProgram = program?.coop_program || false;
+    }
+
+    // Get program requirements
     const { data: courses, error: coursesError } = await supabase
       .from("program_requirements")
       .select("*")
       .eq("program_id", programData.program_id);
     
     if (coursesError) {
-      // console.error("Error fetching program courses:", coursesError);
+      console.error("Error fetching program courses:", coursesError);
     } else {
       programCourses = courses || [];
+    }
+  }
+
+  // Fetch work terms if this is a co-op program
+  let workTerms = [];
+  if (isCoopProgram) {
+    const { data: workTermsData, error: workTermsError } = await supabase
+      .from("work_terms")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true });
+    
+    if (workTermsError) {
+      console.error("Error fetching work terms:", workTermsError);
+    } else {
+      workTerms = workTermsData || [];
     }
   }
 
@@ -188,6 +222,8 @@ export default async function GradesPage() {
                 grades={grades || []}
                 decryptedGrades={decryptedGrades}
                 userId={user.id}
+                isCoopProgram={isCoopProgram}
+                workTerms={workTerms}
               />
             </div>
           ) : (
