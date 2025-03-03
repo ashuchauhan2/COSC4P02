@@ -37,7 +37,7 @@ const getDurationInfo = (durationCode?: string | number) => {
         period: 'September to December',
         icon: (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />
           </svg>
         )
       };
@@ -248,9 +248,32 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
   const [droppingCourse, setDroppingCourse] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<Set<string>>(new Set());
+  const [selectedDuration, setSelectedDuration] = useState<number>(0);
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
+  const [courseConflicts, setCourseConflicts] = useState<Course[]>([]);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [pendingCourseId, setPendingCourseId] = useState<string | null>(null);
 
   const router = useRouter();
   const supabase = createClient();
+
+  // Popular subjects for quick filtering
+  const popularSubjects = [
+    { code: 'COSC', label: 'Computer Science' },
+    { code: 'MATH', label: 'Mathematics' },
+    { code: 'CHEM', label: 'Chemistry' },
+    { code: 'ECON', label: 'Economics' },
+    { code: 'ERSC', label: 'Earth Sciences' },
+  ];
+
+  // Duration options for the filter
+  const durationOptions = [
+    { value: 0, label: 'All Durations' },
+    { value: 1, label: 'Duration 1' },
+    { value: 2, label: 'Duration 2' },
+    { value: 3, label: 'Duration 3' },
+  ];
 
   // For debugging
   useEffect(() => {
@@ -261,20 +284,42 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
   useEffect(() => {
     async function fetchEnrolledCourses() {
       try {
-        const { data, error } = await supabase
+        // First get the enrollment records
+        const { data: enrollments, error: enrollmentsError } = await supabase
           .from('enrollments')
           .select('course_id')
           .eq('user_id', userId)
           .eq('term', term)
           .eq('status', 'enrolled');
 
-        if (error) {
-          console.error('Error fetching enrolled courses:', error);
+        if (enrollmentsError) {
+          console.error('Error fetching enrolled courses:', enrollmentsError);
           return;
         }
-
-        if (data) {
-          setEnrolledCourseIds(new Set(data.map(enrollment => enrollment.course_id)));
+        
+        if (!enrollments || enrollments.length === 0) {
+          setEnrolledCourseIds(new Set());
+          setEnrolledCourses([]);
+          return;
+        }
+        
+        // Get the IDs of enrolled courses
+        const courseIds = enrollments.map(enrollment => enrollment.course_id);
+        setEnrolledCourseIds(new Set(courseIds));
+        
+        // Then fetch the complete course details
+        const { data: courseDetails, error: coursesError } = await supabase
+          .from('courses')
+          .select('*')
+          .in('id', courseIds);
+          
+        if (coursesError) {
+          console.error('Error fetching enrolled course details:', coursesError);
+          return;
+        }
+        
+        if (courseDetails) {
+          setEnrolledCourses(courseDetails);
         }
       } catch (error) {
         console.error('Error fetching enrolled courses:', error);
@@ -289,122 +334,186 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
     return code.replace(/\s+/g, '').toUpperCase();
   };
 
+  // Parse course days string into an array of days
+  const parseDays = (daysStr?: string): string[] => {
+    if (!daysStr) return [];
+    
+    // Common formats: "MWF", "TR", "M/W/F", "T/R", etc.
+    const normalizedDays = daysStr.toUpperCase()
+      .replace(/[^MTWRFSU]/g, '') // Keep only M, T, W, R, F, S, U
+      .split('');
+    
+    // Convert R to Th for Thursday
+    return normalizedDays.map(day => day === 'R' ? 'Th' : day);
+  };
+
+  // Parse time string into start and end times in minutes
+  const parseTime = (timeStr?: string): { start: number; end: number } | null => {
+    if (!timeStr) return null;
+    
+    // Pattern for time strings like "9:00-10:00", "9:00 AM - 10:30 AM", "14:00-15:30"
+    const timePattern = /(\d{1,2}):?(\d{2})?\s*(AM|PM)?\s*[-–—]\s*(\d{1,2}):?(\d{2})?\s*(AM|PM)?/i;
+    const match = timeStr.match(timePattern);
+    
+    if (!match) return null;
+    
+    let [_, startHour, startMin = '00', startAmPm, endHour, endMin = '00', endAmPm] = match;
+    
+    // Convert hours to 24-hour format
+    let startHour24 = parseInt(startHour);
+    let endHour24 = parseInt(endHour);
+    
+    // Handle AM/PM
+    if (startAmPm && startAmPm.toUpperCase() === 'PM' && startHour24 < 12) startHour24 += 12;
+    if (startAmPm && startAmPm.toUpperCase() === 'AM' && startHour24 === 12) startHour24 = 0;
+    if (endAmPm && endAmPm.toUpperCase() === 'PM' && endHour24 < 12) endHour24 += 12;
+    if (endAmPm && endAmPm.toUpperCase() === 'AM' && endHour24 === 12) endHour24 = 0;
+    
+    // Convert to minutes for easier comparison
+    const startMinutes = startHour24 * 60 + parseInt(startMin);
+    const endMinutes = endHour24 * 60 + parseInt(endMin);
+    
+    return { start: startMinutes, end: endMinutes };
+  };
+
+  // Check if two courses have overlapping schedules
+  const hasScheduleConflict = (course1: Course, course2: Course): boolean => {
+    // If either course is missing schedule information, assume no conflict
+    if (!course1.course_days || !course1.class_time || !course2.course_days || !course2.class_time) {
+      return false;
+    }
+    
+    const days1 = parseDays(course1.course_days);
+    const days2 = parseDays(course2.course_days);
+    
+    // Check for overlapping days
+    const sharedDays = days1.filter(day => days2.includes(day));
+    if (sharedDays.length === 0) return false;
+    
+    // Parse time ranges
+    const time1 = parseTime(course1.class_time);
+    const time2 = parseTime(course2.class_time);
+    
+    if (!time1 || !time2) return false;
+    
+    // Check for time overlap on shared days
+    return (
+      (time1.start <= time2.end && time1.end >= time2.start)
+    );
+  };
+
+  // Find conflicts between a new course and existing enrolled courses
+  const findScheduleConflicts = (newCourse: Course, enrolledCourses: Course[]): Course[] => {
+    return enrolledCourses.filter(enrolledCourse => 
+      hasScheduleConflict(newCourse, enrolledCourse)
+    );
+  };
+
   // Debounced search function
-  const debouncedSearch = useCallback(
-    debounce(async (query: string) => {
-      if (query.length < 2) {
-        setCourses([]);
-        setLoading(false);
+  const searchCourses = async (query: string, subject: string | null, duration: number) => {
+    if (!query && duration === 0 && !subject) {
+      setCourses([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Build the base query
+      let supabaseQuery = supabase
+        .from('courses')
+        .select(`
+          id,
+          course_code,
+          course_days,
+          class_time,
+          class_type,
+          instructor,
+          start_date,
+          end_date,
+          course_duration
+        `);
+
+      // Add search query if it exists
+      if (query.length >= 2) {
+        const noSpacesQuery = query.replace(/\s+/g, '').toUpperCase();
+        const withSpacesQuery = query.toUpperCase();
+
+        // Split the query into subject and number parts if possible
+        const matches = noSpacesQuery.match(/^([A-Z]+)(\d.*)?$/);
+        const subjectPart = matches?.[1] || '';
+        const numberPart = matches?.[2] || '';
+
+        // Create different variations of the search pattern
+        const searchPatterns = [
+          noSpacesQuery,                              // e.g., "COSC1P50"
+          withSpacesQuery,                            // e.g., "COSC 1P50"
+          subjectPart + ' ' + numberPart,            // e.g., "COSC 1P50"
+          subjectPart + numberPart                   // e.g., "COSC1P50"
+        ].filter(Boolean); // Remove empty patterns
+
+        // Build the search condition
+        const searchConditions = searchPatterns.map(pattern => 
+          `course_code.ilike.%${pattern}%`
+        ).join(',');
+
+        supabaseQuery = supabaseQuery.or(searchConditions);
+      }
+
+      // Add subject filter if selected
+      if (subject) {
+        supabaseQuery = supabaseQuery.ilike('course_code', `${subject}%`);
+      }
+
+      // Add duration filter if not "All Durations"
+      if (duration > 0) {
+        supabaseQuery = supabaseQuery.eq('course_duration', duration);
+      }
+
+      // Determine limit based on search query specificity
+      // More specific searches get a higher limit to ensure we find matching courses
+      let resultLimit = 20;
+      
+      // If we have a more specific query (likely contains course number), increase the limit
+      if (query.length > 5 || (query.match(/\d/) && query.length > 3)) {
+        resultLimit = 100; // Increased limit for specific searches
+      }
+
+      // Execute the query with dynamic limit
+      const { data, error } = await supabaseQuery.limit(resultLimit);
+
+      if (error) {
+        console.error('Error searching courses:', error);
         return;
       }
 
-      try {
-        setLoading(true);
+      // If this is a very specific query (like a full course code), prioritize exact matches
+      if (query.length >= 7) { // Typical full course code length (e.g., "COSC 3P32")
+        const exactMatches = data?.filter(course => 
+          course.course_code.toLowerCase().includes(query.toLowerCase())
+        );
         
-        // Normalize the search query
-        const normalizedQuery = normalizeCourseCode(query);
-        
-        // Create a filtered query that removes all spaces
-        const noSpacesQuery = query.replace(/\s+/g, '');
-        
-        // Create different search patterns for flexibility
-        const exactQueryPattern = query.toUpperCase(); // Exact match with spaces
-        const noSpacesQueryPattern = noSpacesQuery.toUpperCase(); // No spaces
-        
-        // Getting course prefix (like "COSC" from "COSC 3P03")
-        const prefixMatch = query.match(/^([A-Za-z]+)/);
-        const prefix = prefixMatch ? prefixMatch[1].toUpperCase() : '';
-        
-        // Check if the query looks like a full course code (e.g., "COSC 4P02" or "COSC4P02")
-        // Course codes typically follow a pattern like: 2-4 letters, followed by a number, a letter, and 2 numbers
-        const isFullCourseCode = /^[A-Za-z]{2,4}\s*\d[A-Za-z]\d{2}$/i.test(query);
-        
-        // Perform database query using ilike with various patterns
-        const { data, error } = await supabase
-          .from('courses')
-          .select(`
-            id,
-            course_code,
-            course_days,
-            class_time,
-            class_type,
-            instructor,
-            start_date,
-            end_date,
-            course_duration
-          `)
-          .or(`course_code.ilike.%${query}%,course_code.ilike.%${noSpacesQuery}%${prefix ? `,course_code.ilike.%${prefix}%` : ''}`)
-          .limit(100);
-
-        if (error) {
-          console.error('Error searching courses:', error);
-          return;
-        }
-
-        // Client-side filtering with ranking for better results
-        let filteredCourses = data || [];
-        
-        // Sort courses by relevance
-        filteredCourses.sort((a, b) => {
-          const codeA = a.course_code.toUpperCase();
-          const codeB = b.course_code.toUpperCase();
-          const noSpacesA = codeA.replace(/\s+/g, '');
-          const noSpacesB = codeB.replace(/\s+/g, '');
-          
-          // Exact match has highest priority
-          if (codeA === exactQueryPattern && codeB !== exactQueryPattern) return -1;
-          if (codeB === exactQueryPattern && codeA !== exactQueryPattern) return 1;
-          
-          // No spaces exact match has next priority
-          if (noSpacesA === noSpacesQueryPattern && noSpacesB !== noSpacesQueryPattern) return -1;
-          if (noSpacesB === noSpacesQueryPattern && noSpacesA !== noSpacesQueryPattern) return 1;
-          
-          // Starts with has next priority
-          const aStartsWith = codeA.startsWith(exactQueryPattern) || noSpacesA.startsWith(noSpacesQueryPattern);
-          const bStartsWith = codeB.startsWith(exactQueryPattern) || noSpacesB.startsWith(noSpacesQueryPattern);
-          if (aStartsWith && !bStartsWith) return -1;
-          if (bStartsWith && !aStartsWith) return 1;
-          
-          // Alphabetical order for remaining
-          return codeA.localeCompare(codeB);
-        });
-        
-        // If the query looks like a full course code, apply stricter filtering
-        if (isFullCourseCode) {
-          // First try to find an exact match (with or without spaces)
-          const exactMatches = filteredCourses.filter(course => {
-            const courseCode = course.course_code.toUpperCase();
-            const noSpacesCourseCode = courseCode.replace(/\s+/g, '');
-            return courseCode === exactQueryPattern || noSpacesCourseCode === noSpacesQueryPattern;
-          });
-          
-          // If we have exact matches, only show those
-          if (exactMatches.length > 0) {
-            setCourses(exactMatches);
-            setLoading(false);
-            return;
-          }
-          
-          // Otherwise, show only very close matches (starts with the same pattern)
-          const closeMatches = filteredCourses.filter(course => {
-            const courseCode = course.course_code.toUpperCase();
-            const noSpacesCourseCode = courseCode.replace(/\s+/g, '');
-            
-            // For course codes like "COSC 4P02", only consider very close matches
-            return courseCode.startsWith(exactQueryPattern) || 
-                  noSpacesCourseCode.startsWith(noSpacesQueryPattern);
-          });
-          
-          setCourses(closeMatches);
+        // If we have exact matches, show them first
+        if (exactMatches && exactMatches.length > 0) {
+          setCourses(exactMatches);
         } else {
-          // For partial searches, limit the results to top 20 for display
-          setCourses(filteredCourses.slice(0, 20));
+          setCourses(data || []);
         }
-      } catch (error) {
-        console.error('Error searching courses:', error);
-      } finally {
-        setLoading(false);
+      } else {
+        // For broader searches, just return all matches
+        setCourses(data || []);
       }
+    } catch (error) {
+      console.error('Error searching courses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const debouncedSearch = useCallback(
+    debounce((query: string, subject: string | null, duration: number) => {
+      searchCourses(query, subject, duration);
     }, 300),
     []
   );
@@ -412,12 +521,28 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    debouncedSearch(query);
+    setSelectedSubject(null); // Clear subject selection when searching
+    debouncedSearch(query, null, selectedDuration);
   };
 
+  const handleSubjectClick = (subject: string) => {
+    const newSubject = subject === selectedSubject ? null : subject;
+    setSelectedSubject(newSubject);
+    setSearchQuery(''); // Clear search query when selecting a subject
+    
+    // Cancel any pending debounced searches
+    debouncedSearch.cancel();
+    
+    // Immediately search with the new subject
+    searchCourses('', newSubject, selectedDuration);
+  };
+
+  // This is the initial enrollment handler that checks for conflicts
   const handleEnroll = async (courseId: string) => {
     setEnrollingCourse(courseId);
     setMessage(null);
+    setPendingCourseId(null);
+    setCourseConflicts([]);
 
     try {
       // Validate input values
@@ -440,6 +565,55 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
         return;
       }
 
+      // Check if already enrolled in this course
+      if (enrolledCourseIds.has(courseId)) {
+        setMessage({
+          text: 'You are already enrolled in this course.',
+          type: 'error',
+        });
+        return;
+      }
+
+      // Get the course details for the course being enrolled
+      const selectedCourse = courses.find(course => course.id === courseId);
+      if (!selectedCourse) {
+        setMessage({
+          text: 'Course information not found. Please try again.',
+          type: 'error',
+        });
+        return;
+      }
+
+      // Check for schedule conflicts with existing enrolled courses
+      const conflicts = findScheduleConflicts(selectedCourse, enrolledCourses);
+      
+      if (conflicts.length > 0) {
+        // Store conflicts and show the confirmation modal
+        setCourseConflicts(conflicts);
+        setPendingCourseId(courseId);
+        setShowConflictModal(true);
+        return;
+      }
+
+      // If no conflicts, proceed with enrollment
+      await proceedWithEnrollment(courseId);
+
+    } catch (error) {
+      console.error('Error in enrollment process:', error);
+      setMessage({
+        text: 'An unexpected error occurred. Please try again.',
+        type: 'error',
+      });
+    } finally {
+      setEnrollingCourse(null);
+    }
+  };
+
+  // Function to proceed with enrollment after conflict check or confirmation
+  const proceedWithEnrollment = async (courseId: string) => {
+    setEnrollingCourse(courseId);
+    
+    try {
       // Check how many courses the user is already enrolled in for this term
       const { data: currentEnrollments, error: enrollmentCountError } = await supabase
         .from('enrollments')
@@ -483,15 +657,6 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
         return;
       }
 
-      // Check if already enrolled in this course
-      if (enrolledCourseIds.has(courseId)) {
-        setMessage({
-          text: 'You are already enrolled in this course.',
-          type: 'error',
-        });
-        return;
-      }
-
       // Create new enrollment
       const { error } = await supabase.from('enrollments').insert({
         user_id: userId,
@@ -509,7 +674,18 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
         return;
       }
 
-      // Update local state
+      // Get the enrolled course details and add to local state
+      const { data: courseDetails } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('id', courseId)
+        .single();
+      
+      if (courseDetails) {
+        setEnrolledCourses(prev => [...prev, courseDetails]);
+      }
+
+      // Update enrolled course IDs
       setEnrolledCourseIds(prev => {
         const updated = new Set(prev);
         updated.add(courseId);
@@ -520,6 +696,10 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
         text: 'Successfully enrolled in course!',
         type: 'success',
       });
+      
+      // Reset states
+      setPendingCourseId(null);
+      setCourseConflicts([]);
       
       // Refresh the server components
       router.refresh();
@@ -638,35 +818,75 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Search Courses</h2>
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            placeholder="Enter course code (e.g., COSC 4P02)"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
-            autoComplete="off"
-          />
-          {loading && (
-            <div className="absolute right-3 top-3">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-teal-500"></div>
+        
+        {/* Popular Subjects */}
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 mb-2">Popular Subjects:</p>
+          <div className="flex flex-wrap gap-2">
+            {popularSubjects.map((subject) => (
+              <button
+                key={subject.code}
+                onClick={() => handleSubjectClick(subject.code)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+                  ${
+                    selectedSubject === subject.code
+                      ? 'bg-teal-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+              >
+                {subject.code}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Duration Filter */}
+        <div className="mb-4">
+          <select
+            value={selectedDuration}
+            onChange={(e) => {
+              const duration = parseInt(e.target.value);
+              setSelectedDuration(duration);
+              // Trigger search with new duration
+              searchCourses(searchQuery, selectedSubject, duration);
+            }}
+            className="w-full md:w-48 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all text-gray-700"
+          >
+            <option value={0}>All Durations</option>
+            <option value={1}>Full Year</option>
+            <option value={2}>Fall Term</option>
+            <option value={3}>Winter Term</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Enter course code (e.g., COSC 4P02)"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
+              autoComplete="off"
+            />
+            {loading && (
+              <div className="absolute right-3 top-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-teal-500"></div>
+              </div>
+            )}
+          </div>
+
+          {message && (
+            <div
+              className={`p-4 rounded-md ${
+                message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+              }`}
+            >
+              {message.text}
             </div>
           )}
         </div>
-        <p className="text-sm text-gray-500 mt-2">
-          Search by course code in any format (with or without spaces)
-        </p>
       </div>
-
-      {message && (
-        <div
-          className={`p-4 rounded-md ${
-            message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {courses.length > 0 ? (
         <div className="space-y-4">
@@ -811,6 +1031,83 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
           <p className="text-gray-600">Try a different search term</p>
         </div>
       ) : null}
+
+      {/* Schedule Conflict Modal */}
+      {showConflictModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            {/* Background overlay */}
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+
+            {/* Modal panel */}
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                      Schedule Conflict Detected
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500">
+                        There {courseConflicts.length === 1 ? 'is' : 'are'} {courseConflicts.length} scheduling conflict{courseConflicts.length !== 1 ? 's' : ''} with your currently enrolled courses:
+                      </p>
+                      <div className="mt-4 space-y-3">
+                        {courseConflicts.map((conflict) => (
+                          <div key={conflict.id} className="border border-gray-200 rounded-md p-3 bg-gray-50">
+                            <p className="font-medium text-gray-700">{conflict.course_code}</p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {conflict.course_days} - {conflict.class_time}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {conflict.instructor && (`Instructor: ${conflict.instructor}`)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="mt-4 text-sm text-red-600 font-medium">
+                        Are you sure you want to enroll in this course despite the schedule conflict?
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (pendingCourseId) {
+                      setShowConflictModal(false);
+                      proceedWithEnrollment(pendingCourseId);
+                    }
+                  }}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-yellow-600 text-base font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Enroll Anyway
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConflictModal(false);
+                    setPendingCourseId(null);
+                    setCourseConflicts([]);
+                    setEnrollingCourse(null);
+                  }}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

@@ -64,6 +64,9 @@ export default function Navbar() {
             // If signing out, make sure to mark that we're no longer in the signing out state
             if (_event === 'SIGNED_OUT') {
               setIsSigningOut(false);
+            } else if (_event === 'SIGNED_IN') {
+              // Make sure we're definitely not in a signing out state when signing in
+              setIsSigningOut(false);
             }
             
             // Force component refresh through router refresh on important events
@@ -112,6 +115,9 @@ export default function Navbar() {
       const supabase = getSupabase();
       await supabase.auth.signOut();
       
+      // Clear any cached auth state
+      localStorage.removeItem('supabase.auth.token');
+      
       // Navigate after sign-out completed
       router.push('/sign-in');
       router.refresh();
@@ -122,14 +128,21 @@ export default function Navbar() {
     }
   };
 
-  // Show authenticated nav if in protected routes or if we have a user, but not if we're signing out
-  const isAuthenticated = (!isSigningOut && (!!user || pathname?.startsWith('/protected')));
+  // Get user authentication status from Supabase session
+  const hasValidUser = !!user && user.id !== 'temp-user-id';
+  
+  // Check if we're on a protected route
+  const isProtectedRoute = pathname?.startsWith('/protected');
+  
+  // Determine authentication status based on multiple factors
+  const isAuthenticated = !isSigningOut && (hasValidUser || isProtectedRoute);
 
-  // Non-auth routes that should show the signed-out navbar regardless of other factors
+  // Non-auth routes that should always show the signed-out navbar regardless of other factors
   const forceUnauthenticatedPaths = ['/sign-in', '/sign-up', '/forgot-password'];
   const isOnAuthPage = forceUnauthenticatedPaths.includes(pathname || '');
   
-  // Final auth state determination
+  // Final auth state determination - either we have a valid session or we're on a protected route
+  // but not if we're specifically on an auth page
   const showAuthenticatedUI = isAuthenticated && !isOnAuthPage;
 
   return (
@@ -187,10 +200,10 @@ export default function Navbar() {
                   )}
                 </div>
                 <Link
-                  href="/protected/grades"
+                  href="/protected/academic-progress"
                   className="text-gray-600 hover:text-teal-600 transition-colors px-4 py-1"
                 >
-                  Grades
+                  Academic Progress
                 </Link>
                 <Link
                   href="/protected/course-reviews"
@@ -292,11 +305,11 @@ export default function Navbar() {
                     )}
                   </div>
                   <Link
-                    href="/protected/grades"
+                    href="/protected/academic-progress"
                     className="text-gray-600 hover:text-teal-600 transition-colors px-2 py-1"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Grades
+                    Academic Progress
                   </Link>
                   <Link
                     href="/protected/course-reviews"
