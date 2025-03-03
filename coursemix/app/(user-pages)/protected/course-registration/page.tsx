@@ -42,16 +42,16 @@ export default async function CourseRegistrationPage() {
   const displayTerm = `${currentTerm} ${currentYear}`;
 
   return (
-    <main className="bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen py-6">
+    <main className="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen py-6">
       <div className="max-w-6xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Course Registration</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Course Registration</h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-2">
             Register for courses for the {displayTerm} term
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
           <CourseSearch 
             userId={user.id} 
             term={currentTerm} 

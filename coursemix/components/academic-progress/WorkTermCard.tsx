@@ -111,8 +111,8 @@ export default function WorkTermCard({
   };
 
   const getStatusColor = () => {
-    if (isCompleted) return "border-green-400 bg-green-50/80";
-    return "border-gray-200 bg-white";
+    if (isCompleted) return "border-green-400 bg-green-50/80 dark:border-green-600 dark:bg-green-900/30";
+    return "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800";
   };
 
   return (
@@ -121,25 +121,25 @@ export default function WorkTermCard({
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-center gap-1 mb-1">
-              <h3 className="font-bold text-gray-800">{termName}</h3>
+              <h3 className="font-bold text-gray-800 dark:text-gray-100">{termName}</h3>
             </div>
             
             {!isScieWorkshop && (
-              <div className="text-sm text-gray-600 flex items-center gap-2">
+              <div className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2">
                 {isEditing ? (
                   <div className="flex items-center gap-1">
                     <Input
                       value={company}
                       onChange={(e) => setCompany(e.target.value)}
                       placeholder="Company name"
-                      className="h-7 text-xs w-32"
+                      className="h-7 text-xs w-32 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
                     />
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={handleUpdateCompany}
                       disabled={isSubmitting}
-                      className="h-5 w-5 text-green-600 hover:bg-green-100 p-0.5 rounded-full"
+                      className="h-5 w-5 text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/50 p-0.5 rounded-full"
                     >
                       <Check className="h-3 w-3" />
                     </Button>
@@ -150,7 +150,7 @@ export default function WorkTermCard({
                         setIsEditing(false);
                         setCompany(companyName || "");
                       }}
-                      className="h-5 w-5 text-red-600 hover:bg-red-100 p-0.5 rounded-full"
+                      className="h-5 w-5 text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50 p-0.5 rounded-full"
                     >
                       <X className="h-3 w-3" />
                     </Button>
@@ -162,7 +162,7 @@ export default function WorkTermCard({
                       variant="ghost"
                       size="icon"
                       onClick={() => setIsEditing(true)}
-                      className="h-5 w-5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-0.5 rounded-full opacity-80 hover:opacity-100"
+                      className="h-5 w-5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700 p-0.5 rounded-full opacity-80 hover:opacity-100"
                       title="Edit Company"
                     >
                       <Edit className="h-3 w-3" />
@@ -182,8 +182,8 @@ export default function WorkTermCard({
                   disabled={isSubmitting}
                   onClick={handleToggleCompleted}
                   className={`text-xs h-7 ${isCompleted 
-                    ? "bg-green-50 border-green-500 text-green-600 hover:bg-white hover:text-green-700" 
-                    : "bg-white hover:bg-green-50 border-green-500 text-green-600 hover:text-green-700"}`}
+                    ? "bg-green-50 border-green-500 text-green-600 hover:bg-white hover:text-green-700 dark:bg-green-900/30 dark:border-green-600 dark:text-green-400 dark:hover:bg-green-900/50 dark:hover:text-green-300" 
+                    : "bg-white hover:bg-green-50 border-green-500 text-green-600 hover:text-green-700 dark:bg-gray-800 dark:hover:bg-green-900/30 dark:border-green-700 dark:text-green-400 dark:hover:text-green-300"}`}
                 >
                   {isCompleted ? "Undo Complete" : "Mark Complete"}
                 </Button>
@@ -193,7 +193,7 @@ export default function WorkTermCard({
                     variant="ghost"
                     size="icon"
                     onClick={() => setIsConfirmingDelete(true)}
-                    className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
                     title="Remove Work Term"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -206,7 +206,7 @@ export default function WorkTermCard({
                   variant="outline"
                   size="sm"
                   onClick={() => setIsConfirmingDelete(false)}
-                  className="text-xs h-7 bg-white hover:bg-gray-100 border-gray-300 text-gray-700"
+                  className="text-xs h-7 bg-white hover:bg-gray-100 border-gray-300 text-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                 >
                   Cancel
                 </Button>
@@ -215,7 +215,7 @@ export default function WorkTermCard({
                   size="sm"
                   disabled={isSubmitting}
                   onClick={handleDeleteWorkTerm}
-                  className="text-xs h-7 bg-white hover:bg-red-50 border-red-500 text-red-600 hover:text-red-700"
+                  className="text-xs h-7 bg-white hover:bg-red-50 border-red-500 text-red-600 hover:text-red-700 dark:bg-gray-800 dark:hover:bg-red-900/30 dark:border-red-600 dark:text-red-400 dark:hover:text-red-300"
                 >
                   Confirm Delete
                 </Button>
@@ -225,7 +225,7 @@ export default function WorkTermCard({
         </div>
         
         <div className="mt-auto pt-2">
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {isScieWorkshop ? (
               "Required co-op preparation"
             ) : (

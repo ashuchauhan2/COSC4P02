@@ -68,6 +68,23 @@
   }
 }
 
+/* Theme transition */
+:root {
+  --theme-transition-duration: 0.2s;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* Smooth transition when switching between themes */
+html.light *,
+html.dark * {
+  transition: background-color var(--theme-transition-duration) ease-in-out,
+              border-color var(--theme-transition-duration) ease-in-out,
+              color var(--theme-transition-duration) ease-in-out;
+}
+
 /* Custom loading cursor during page transitions */
 .loading-cursor,
 .loading-cursor * {
@@ -121,4 +138,14 @@
 /* Prevent focus outline during transitions */
 .transitioning *:focus {
   outline: none !important;
+}
+
+/* Animation for fixed theme toggle */
+@keyframes theme-toggle-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: theme-toggle-fade-in 0.5s ease-out forwards;
 }

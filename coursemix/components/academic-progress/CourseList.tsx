@@ -85,8 +85,8 @@ export default function CourseList({
     <div className="space-y-8">
       {/* Add Work Terms section for co-op programs */}
       {isCoopProgram && (
-        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Co-op Work Terms</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Co-op Work Terms</h2>
           <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
             {/* SCIE 0N90 Course Card */}
             <WorkTermCard
@@ -117,8 +117,8 @@ export default function CourseList({
       
       {/* Existing year-by-year course listings */}
       {years.map((year) => (
-        <div key={year} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Year {year}</h2>
+        <div key={year} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Year {year}</h2>
           <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {coursesByYear[year].map((course) => {
               // Find grade for this specific requirement

@@ -310,8 +310,8 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
   
   // Status color mapping
   const statusColors: { [key: string]: string } = {
-    'completed': 'bg-green-100 text-green-800',
-    'in-progress': 'bg-blue-100 text-blue-800',
+    'completed': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    'in-progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
   };
   
   // Calculate progress towards degree (40 courses total)
@@ -328,24 +328,24 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
   return (
     <div className="space-y-8">
       {error && (
-        <div className="bg-red-50 text-red-700 p-3 rounded-md mb-4">
+        <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 p-3 rounded-md mb-4 border border-red-100 dark:border-red-800">
           {error}
         </div>
       )}
       
       {success && (
-        <div className="bg-green-50 text-green-700 p-3 rounded-md mb-4">
+        <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 rounded-md mb-4 border border-green-100 dark:border-green-800">
           {success}
         </div>
       )}
       
       {debugInfo && (
-        <div className="bg-yellow-50 text-yellow-700 p-3 rounded-md mb-4">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 p-3 rounded-md mb-4 border border-yellow-100 dark:border-yellow-800">
           <p><strong>Debug Info:</strong> {debugInfo}</p>
           <p className="text-sm mt-2">Try refreshing the page completely or signing out and back in if grades are not displaying properly.</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="mt-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 rounded-md text-sm"
+            className="mt-2 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-800 dark:hover:bg-yellow-700 text-yellow-800 dark:text-yellow-200 px-3 py-1 rounded-md text-sm"
           >
             Force Refresh
           </button>
@@ -353,7 +353,7 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
       )}
 
       {/* Security Notice */}
-      <div className="bg-blue-50 border border-blue-200 text-blue-700 p-3 rounded-md flex items-start">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 p-3 rounded-md flex items-start">
         <div className="mr-2">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
             <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" />
@@ -367,14 +367,14 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
       </div>
       
       {/* Degree Progress Overview */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Degree Progress</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-100 dark:border-gray-700">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Degree Progress</h2>
         
         <div className="flex items-center mb-4">
-          <div className="w-full bg-gray-200 rounded-full h-4 mr-4 overflow-hidden">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mr-4 overflow-hidden">
             <div className="flex h-4">
               <div 
-                className={`bg-teal-600 h-4 transition-all duration-500 ease-in-out ${inProgressCourses === 0 ? 'rounded-full' : 'rounded-l-full'}`}
+                className={`bg-teal-600 dark:bg-teal-500 h-4 transition-all duration-500 ease-in-out ${inProgressCourses === 0 ? 'rounded-full' : 'rounded-l-full'}`}
                 style={{ width: `${percentComplete}%` }}
               ></div>
               {inProgressCourses > 0 && (
@@ -385,10 +385,10 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
               )}
             </div>
           </div>
-          <div className="text-sm font-medium text-gray-600 whitespace-nowrap">
+          <div className="text-sm font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">
             {percentComplete}% Complete
             {inProgressCourses > 0 && (
-              <span className="text-blue-600 ml-1">
+              <span className="text-blue-600 dark:text-blue-400 ml-1">
                 (+{percentInProgress}% In Progress)
               </span>
             )}
@@ -396,25 +396,25 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div className="bg-teal-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-teal-700">Completed</h3>
-            <p className="text-3xl font-bold text-teal-900">{completedCourses}</p>
+          <div className="bg-teal-50 dark:bg-teal-900/20 p-4 rounded-lg border border-teal-100 dark:border-teal-800">
+            <h3 className="text-lg font-medium text-teal-700 dark:text-teal-300">Completed</h3>
+            <p className="text-3xl font-bold text-teal-900 dark:text-teal-200">{completedCourses}</p>
           </div>
           
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-blue-700">In Progress</h3>
-            <p className="text-3xl font-bold text-blue-900">{inProgressCourses}</p>
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+            <h3 className="text-lg font-medium text-blue-700 dark:text-blue-300">In Progress</h3>
+            <p className="text-3xl font-bold text-blue-900 dark:text-blue-200">{inProgressCourses}</p>
           </div>
           
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-700">Remaining</h3>
-            <p className="text-3xl font-bold text-gray-900">{remainingCourses}</p>
+          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+            <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300">Remaining</h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{remainingCourses}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-700 mb-1">Brock University Average</h3>
+          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+            <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Brock University Average</h3>
             <p className={`text-3xl font-bold ${
               numericalAverage >= 80 ? 'text-green-600' : 
               numericalAverage >= 70 ? 'text-blue-600' : 
@@ -426,8 +426,8 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
             <p className="text-xs text-gray-500 mt-1">Brock's percentage-based grading system</p>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-700 mb-1">Standard GPA (4.0 Scale)</h3>
+          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+            <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Standard GPA (4.0 Scale)</h3>
             <p className={`text-3xl font-bold ${
               overallGPA >= 3.7 ? 'text-green-600' : 
               overallGPA >= 3.0 ? 'text-teal-600' : 

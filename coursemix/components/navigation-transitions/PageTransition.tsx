@@ -296,7 +296,7 @@ export function PageTransition({ children }: PageTransitionProps) {
       <AnimatePresence>
         {(isTransitioning || isForceTransitioning) && (
           <motion.div
-            className="fixed inset-0 bg-white z-[100] pointer-events-none flex items-center justify-center"
+            className="fixed inset-0 bg-white dark:bg-gray-900 z-[100] pointer-events-none flex items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ 
               opacity: transitionPhase === 'end' ? 0 : 0.98 
@@ -308,7 +308,7 @@ export function PageTransition({ children }: PageTransitionProps) {
             }}
           >
             <motion.div 
-              className="w-12 h-12 rounded-full border-t-2 border-r-2 border-teal-600"
+              className="w-12 h-12 rounded-full border-t-2 border-r-2 border-teal-600 dark:border-teal-500"
               animate={{ rotate: 360 }}
               transition={{ 
                 duration: 0.8, 

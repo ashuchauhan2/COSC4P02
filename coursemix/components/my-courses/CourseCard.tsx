@@ -107,41 +107,41 @@ export default function CourseCard({ course, userId }: CourseCardProps) {
   };
   
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 relative">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 relative">
       {showConfirmation && (
-        <div className="absolute inset-0 bg-white bg-opacity-95 rounded-lg flex flex-col items-center justify-center p-6 z-10">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Confirm Drop Course</h3>
-          <p className="text-gray-600 mb-6 text-center">
+        <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-95 dark:bg-opacity-95 rounded-lg flex flex-col items-center justify-center p-6 z-10">
+          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Confirm Drop Course</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6 text-center">
             Are you sure you want to drop <span className="font-semibold">{course.course_code}</span>? 
             This will completely remove the course from your enrollments.
           </p>
           <div className="flex space-x-4">
             <button
               onClick={() => setShowConfirmation(false)}
-              className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               disabled={isDropping}
             >
               Cancel
             </button>
             <button
               onClick={dropCourse}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 transition-colors"
               disabled={isDropping}
             >
               {isDropping ? "Dropping..." : "Drop Course"}
             </button>
           </div>
-          {error && <p className="text-red-600 mt-4">{error}</p>}
+          {error && <p className="text-red-600 dark:text-red-400 mt-4">{error}</p>}
         </div>
       )}
       
       <div className="flex justify-between items-start">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">{course.course_code}</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{course.course_code}</h2>
         </div>
         <button
           onClick={() => setShowConfirmation(true)}
-          className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+          className="px-3 py-1 text-sm bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-800/50 transition-colors"
         >
           Drop Course
         </button>
@@ -149,33 +149,33 @@ export default function CourseCard({ course, userId }: CourseCardProps) {
       
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Course Details</h3>
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Course Details</h3>
           <div className="space-y-2">
             <div className="flex">
-              <span className="text-gray-600 w-24">Type:</span>
-              <span className="font-medium text-gray-800">{course.class_type || "N/A"}</span>
+              <span className="text-gray-600 dark:text-gray-400 w-24">Type:</span>
+              <span className="font-medium text-gray-800 dark:text-gray-200">{course.class_type || "N/A"}</span>
             </div>
           </div>
         </div>
         
         <div>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Schedule</h3>
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Schedule</h3>
           <div className="space-y-2">
             <div className="flex">
-              <span className="text-gray-600 w-24">Days:</span>
-              <span className="font-medium text-gray-800">{formatCourseDays(course.course_days)}</span>
+              <span className="text-gray-600 dark:text-gray-400 w-24">Days:</span>
+              <span className="font-medium text-gray-800 dark:text-gray-200">{formatCourseDays(course.course_days)}</span>
             </div>
             <div className="flex">
-              <span className="text-gray-600 w-24">Time:</span>
-              <span className="font-medium text-gray-800">{formatClassTime(course.class_time)}</span>
+              <span className="text-gray-600 dark:text-gray-400 w-24">Time:</span>
+              <span className="font-medium text-gray-800 dark:text-gray-200">{formatClassTime(course.class_time)}</span>
             </div>
           </div>
         </div>
       </div>
       
-      <div className="mt-6 border-t border-gray-200 pt-4">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Instructor</h3>
-        <p className="font-medium text-gray-800">{course.instructor || "TBA"}</p>
+      <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+        <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Instructor</h3>
+        <p className="font-medium text-gray-800 dark:text-gray-200">{course.instructor || "TBA"}</p>
       </div>
     </div>
   );

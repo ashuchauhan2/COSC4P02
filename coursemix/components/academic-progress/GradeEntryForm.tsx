@@ -106,9 +106,9 @@ export default function GradeEntryForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow">
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 border border-gray-200 dark:border-gray-700">
       <div className="flex flex-col space-y-1">
-        <label htmlFor="grade" className="text-sm font-medium text-gray-700">
+        <label htmlFor="grade" className="text-sm font-medium text-gray-700 dark:text-gray-300">
           Grade
         </label>
         <input
@@ -116,20 +116,20 @@ export default function GradeEntryForm({
           type="text"
           value={grade}
           onChange={(e) => setGrade(e.target.value)}
-          className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:text-gray-100"
           placeholder="Enter grade (e.g., A, B+, 85)"
         />
       </div>
       
       <div className="flex flex-col space-y-1">
-        <label htmlFor="term" className="text-sm font-medium text-gray-700">
+        <label htmlFor="term" className="text-sm font-medium text-gray-700 dark:text-gray-300">
           Term
         </label>
         <select
           id="term"
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:text-gray-100"
           required
         >
           <option value="">Select Term</option>
@@ -142,14 +142,14 @@ export default function GradeEntryForm({
       </div>
       
       <div className="flex flex-col space-y-1">
-        <label htmlFor="year" className="text-sm font-medium text-gray-700">
+        <label htmlFor="year" className="text-sm font-medium text-gray-700 dark:text-gray-300">
           Year
         </label>
         <select
           id="year"
           value={year}
           onChange={(e) => setYear(Number(e.target.value))}
-          className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:text-gray-100"
           required
         >
           <option value="">Select Year</option>
@@ -164,7 +164,7 @@ export default function GradeEntryForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400 dark:bg-blue-700 dark:hover:bg-blue-600 dark:disabled:bg-blue-800 dark:focus:ring-blue-400 dark:focus:ring-offset-gray-800"
       >
         {isSubmitting ? 'Saving...' : 'Save Grade'}
       </button>
