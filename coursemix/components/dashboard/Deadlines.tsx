@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { PlusCircle, Trash2, Calendar } from 'lucide-react';
 
@@ -25,6 +25,10 @@ export default function Deadlines({ userId }: DeadlinesProps) {
   const [newDueDate, setNewDueDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Add a state for visible deadlines based on container height
+  const [visibleDeadlines, setVisibleDeadlines] = useState<Deadline[]>([]);
+  const deadlinesContainerRef = useRef<HTMLDivElement>(null);
+
   const fetchDeadlines = async () => {
     setIsLoading(true);
     setError(null);
@@ -42,8 +46,7 @@ export default function Deadlines({ userId }: DeadlinesProps) {
         .select('*')
         .eq('user_id', userId)
         .gte('due_date', todayISOString) // Only get deadlines today or in the future
-        .order('due_date', { ascending: true }) // Sort by nearest date first
-        .limit(3);
+        .order('due_date', { ascending: true }); // Sort by nearest date first
       
       if (error) throw error;
       
@@ -61,6 +64,31 @@ export default function Deadlines({ userId }: DeadlinesProps) {
       fetchDeadlines();
     }
   }, [userId]);
+
+  // Update visible deadlines when deadlines change or on resize
+  useEffect(() => {
+    const updateVisibleDeadlines = () => {
+      if (!deadlinesContainerRef.current || deadlines.length === 0) {
+        setVisibleDeadlines(deadlines);
+        return;
+      }
+      
+      // Approximate height calculation based on container size
+      // Each deadline item is roughly 60-70px tall depending on content
+      const containerHeight = deadlinesContainerRef.current.clientHeight;
+      const itemHeight = 70; // Average height of a deadline item
+      const maxItems = Math.max(3, Math.floor(containerHeight / itemHeight));
+      
+      // Set visible deadlines (at least 3, but potentially more based on space)
+      setVisibleDeadlines(deadlines.slice(0, maxItems));
+    };
+    
+    updateVisibleDeadlines();
+    
+    // Add resize listener to update on window resize
+    window.addEventListener('resize', updateVisibleDeadlines);
+    return () => window.removeEventListener('resize', updateVisibleDeadlines);
+  }, [deadlines]);
 
   const handleAddDeadline = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,7 +186,7 @@ export default function Deadlines({ userId }: DeadlinesProps) {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full flex flex-col">
       <div className="flex justify-between items-center mb-1 sm:mb-2">
         <h3 className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">
           Upcoming Deadlines
@@ -228,17 +256,20 @@ export default function Deadlines({ userId }: DeadlinesProps) {
         </form>
       )}
 
-      <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-2 sm:p-3 divide-y divide-gray-200 dark:divide-gray-600">
+      <div 
+        ref={deadlinesContainerRef} 
+        className="bg-gray-50 dark:bg-gray-700 rounded-md p-2 sm:p-3 divide-y divide-gray-200 dark:divide-gray-600 flex-grow overflow-y-auto min-h-[200px]"
+      >
         {isLoading ? (
           <div className="py-2 text-center text-xs text-gray-500 dark:text-gray-400">
             Loading deadlines...
           </div>
-        ) : deadlines.length === 0 ? (
+        ) : visibleDeadlines.length === 0 ? (
           <div className="py-2 text-center text-xs text-gray-500 dark:text-gray-400">
             No upcoming deadlines
           </div>
         ) : (
-          deadlines.map((deadline) => (
+          visibleDeadlines.map((deadline) => (
             <div key={deadline.id} className="py-2 first:pt-0 last:pb-0">
               <div className="flex justify-between items-center">
                 <div>
@@ -265,6 +296,12 @@ export default function Deadlines({ userId }: DeadlinesProps) {
           ))
         )}
       </div>
+      
+      {deadlines.length > visibleDeadlines.length && (
+        <div className="text-center mt-2 text-xs text-indigo-600 dark:text-indigo-400">
+          +{deadlines.length - visibleDeadlines.length} more deadlines
+        </div>
+      )}
     </div>
   );
 } 

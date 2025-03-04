@@ -278,9 +278,10 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                     const colorHash = course.course_code
                       .split("")
                       .reduce((acc, char) => char.charCodeAt(0) + acc, 0);
-                    const hue = colorHash % 360;
+                    const hue = colorHash % 190;
                     
-                    console.log(`Rendering course ${course.course_code} at top=${top}%, height=${height}%`);
+                    // console.log(`Rendering course ${course.course_code} at top=${top}%, height=${height}%`);
+                  
 
                     return (
                       <div
@@ -292,7 +293,7 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                         style={{
                           top: `${top}%`,
                           height: `${height}%`,
-                          backgroundColor: `hsla(${hue}, 70%, 85%, 0.9)`,
+                          backgroundColor: `hsl(${hue}, 97%, 37%)`,
                           borderColor: `hsla(${hue}, 70%, 60%, 1)`,
                           padding: height < 8 ? '1px 3px' : '3px 4px',
                           fontSize: height < 10 ? '0.65rem' : '0.75rem',
@@ -303,15 +304,15 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                         </div>
                         
                         {/* Always show course type */}
-                        <div className="truncate text-gray-600 dark:text-gray-700 leading-tight" 
-                             style={{ fontSize: height < 10 ? '0.6rem' : '0.65rem' }}>
+                        <div className="truncate text-gray-900 leading-tight" 
+                            style={{ fontSize: height < 10 ? '0.6rem' : '0.65rem' }}>
                           {course.class_type}
                         </div>
 
                         {/* Always show instructor but adjust for small blocks */}
                         {course.instructor && (
-                          <div className="truncate text-gray-500 dark:text-gray-600 mt-auto leading-tight" 
-                               style={{ fontSize: height < 10 ? '0.55rem' : '0.6rem' }}>
+                          <div className="truncate text-gray-900 mt-auto leading-tight" 
+                              style={{ fontSize: height < 10 ? '0.55rem' : '0.6rem' }}>
                             {height <= 10 
                               ? course.instructor.split(",")[0] // Just last name for very small blocks
                               : course.instructor.split(",").length > 1 
@@ -363,7 +364,7 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                               border-l-4 transition-transform hover:scale-[1.02] cursor-pointer
                               flex flex-col dark:shadow-gray-900"
                     style={{
-                      backgroundColor: `hsla(${hue}, 70%, 85%, 0.9)`,
+                      backgroundColor: `hsl(${hue}, 97%, 37%)`,
                       borderColor: `hsla(${hue}, 70%, 60%, 1)`,
                       minWidth: '180px',
                     }}
@@ -371,7 +372,7 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                     <div className="font-bold text-gray-800 dark:text-gray-900">
                       {course.course_code}
                     </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-700 mt-1">
+                    <div className="text-xs text-gray-600 dark:text-gray-800 mt-1">
                       {course.class_type === "ASY" ? "Asynchronous Online" :
                       course.class_type === "ASO" ? "Asynchronous Online, In-Person Exam" :
                       course.class_type === "SYN" ? "Synchronous Online" :
@@ -382,7 +383,7 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                       "Online"}
                     </div>
                     {course.instructor && (
-                      <div className="text-xs text-gray-500 dark:text-gray-600 mt-1">
+                      <div className="text-xs text-gray-500 dark:text-gray-900 mt-1">
                         {course.instructor}
                       </div>
                     )}
