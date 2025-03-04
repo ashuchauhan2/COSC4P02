@@ -45,6 +45,7 @@ export default async function EditProfilePage({
     const studentNumber = formData.get("student_number") as string;
     const programId = parseInt(formData.get("program_id") as string);
     const targetAverage = parseInt(formData.get("target_average") as string);
+    const universityStartDate = formData.get("university_start_date") as string;
 
     if (!firstName || !lastName || !studentNumber || !programId) {
       return redirect("/protected/profile/edit?message=All fields are required");
@@ -70,6 +71,15 @@ export default async function EditProfilePage({
 
     const programChanged = currentProfile && currentProfile.program_id !== programId;
 
+    // Properly format the date for PostgreSQL timestamptz
+    let formattedStartDate = null;
+    if (universityStartDate) {
+      // Ensure the date is stored as UTC midnight to preserve the exact date
+      const [year, month, day] = universityStartDate.split('-').map(Number);
+      const utcDate = new Date(Date.UTC(year, month - 1, day));
+      formattedStartDate = utcDate.toISOString();
+    }
+
     // Update user profile in the database
     const { error } = await supabase
       .from("user_profiles")
@@ -79,6 +89,7 @@ export default async function EditProfilePage({
         student_number: studentNumber,
         program_id: programId,
         target_average: targetAverage || null,
+        university_start_date: formattedStartDate,
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", user.id);
@@ -222,6 +233,22 @@ export default async function EditProfilePage({
                     defaultValue={userProfile.target_average || ""}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent"
                   />
+                </div>
+
+                <div>
+                  <label htmlFor="university_start_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    University Start Date
+                  </label>
+                  <input
+                    id="university_start_date"
+                    name="university_start_date"
+                    type="date"
+                    defaultValue={userProfile.university_start_date ? new Date(userProfile.university_start_date).toISOString().split('T')[0] : ""}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    When you started your university journey
+                  </p>
                 </div>
               </div>
 

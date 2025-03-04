@@ -88,6 +88,11 @@ export default async function ProfilePage(props: PageProps) {
                 <p className="text-teal-600 dark:text-teal-400 font-medium">
                   Target Average: {userProfile.target_average || "Not set"}
                 </p>
+                {userProfile.university_start_date && (
+                  <p className="text-gray-600 dark:text-gray-400 mb-1">
+                    Started: {formatDate(userProfile.university_start_date)}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -127,6 +132,13 @@ export default async function ProfilePage(props: PageProps) {
               <div>
                 <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Target Average</h4>
                 <p className="text-gray-800 dark:text-gray-200">{userProfile.target_average || "Not set"}</p>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">University Start Date</h4>
+                <p className="text-gray-800 dark:text-gray-200">
+                  {userProfile.university_start_date ? formatDate(userProfile.university_start_date) : "Not set"}
+                </p>
               </div>
               
               <div>

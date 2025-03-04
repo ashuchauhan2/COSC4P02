@@ -48,9 +48,10 @@ export default async function ProfileSetupPage({
     const studentNumber = formData.get("student_number") as string;
     const programId = parseInt(formData.get("program_id") as string);
     const targetAverage = parseInt(formData.get("target_average") as string) || null;
+    const universityStartDate = formData.get("university_start_date") as string;
 
     if (!firstName || !lastName || !studentNumber || !programId) {
-      return redirect("/protected/profile-setup?message=All fields except Target Average are required");
+      return redirect("/protected/profile-setup?message=All fields except Target Average and University Start Date are required");
     }
 
     // Create Supabase client inside the server action
@@ -75,6 +76,15 @@ export default async function ProfileSetupPage({
       return redirect("/protected/profile-setup?message=This student number is already registered. Please use a different number or contact support.");
     }
 
+    // Properly format the date for PostgreSQL timestamptz
+    let formattedStartDate = null;
+    if (universityStartDate) {
+      // Ensure the date is stored as UTC midnight to preserve the exact date
+      const [year, month, day] = universityStartDate.split('-').map(Number);
+      const utcDate = new Date(Date.UTC(year, month - 1, day));
+      formattedStartDate = utcDate.toISOString();
+    }
+
     // Create new user profile in the database
     const { error } = await supabase
       .from("user_profiles")
@@ -85,6 +95,7 @@ export default async function ProfileSetupPage({
         student_number: studentNumber,
         program_id: programId,
         target_average: targetAverage,
+        university_start_date: formattedStartDate,
         is_profile_setup: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -198,6 +209,21 @@ export default async function ProfileSetupPage({
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Optional: Your target GPA for your academic journey
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="university_start_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    University Start Date
+                  </label>
+                  <input
+                    id="university_start_date"
+                    name="university_start_date"
+                    type="date"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Optional: When you started your university journey
                   </p>
                 </div>
               </div>

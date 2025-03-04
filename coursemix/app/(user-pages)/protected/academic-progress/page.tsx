@@ -5,6 +5,7 @@ import CourseList from "@/components/academic-progress/CourseList";
 import { decryptGrade } from "@/utils/grade-utils";
 import Link from "next/link";
 import { Toaster } from "sonner";
+import { getCurrentDateET, formatDate } from "@/utils/date-utils";
 
 export default async function GradesPage() {
   const supabase = await createClient();
@@ -179,6 +180,181 @@ export default async function GradesPage() {
     }
   }
 
+  // Calculate graduation date projection
+  let completedCourses = 0;
+  let inProgressCourses = 0;
+  
+  // Get the highest year from program courses to determine program length
+  const maxProgramYear = programCourses.length > 0 
+    ? Math.max(...programCourses.map((course: any) => course.year || 0))
+    : 4; // Default to 4 years if no program data
+  
+  // Filter out failed courses and courses below minimum grade
+  if (grades) {
+    grades.forEach(grade => {
+      // Get the requirement for this course, if it exists
+      const requirement = programCourses.find((req: any) => req.course_code === grade.course_code);
+      const minGradeRequired = requirement?.min_grade || 50; // Default to 50 if not specified
+      
+      // Get the numeric value of the grade
+      const gradeValue = decryptedGrades[grade.id];
+      let numericGrade = 0;
+      
+      if (gradeValue && gradeValue !== 'N/A' && gradeValue !== 'Error' && gradeValue !== 'Decryption Error') {
+        if (!isNaN(Number(gradeValue))) {
+          numericGrade = Number(gradeValue);
+        } else {
+          // Convert letter grades to numeric
+          switch(gradeValue) {
+            case 'A+': numericGrade = 90; break;
+            case 'A': numericGrade = 85; break;
+            case 'A-': numericGrade = 80; break;
+            case 'B+': numericGrade = 77; break;
+            case 'B': numericGrade = 75; break;
+            case 'B-': numericGrade = 70; break;
+            case 'C+': numericGrade = 67; break;
+            case 'C': numericGrade = 65; break;
+            case 'C-': numericGrade = 60; break;
+            case 'D+': numericGrade = 57; break;
+            case 'D': numericGrade = 55; break;
+            case 'D-': numericGrade = 50; break;
+            case 'F': numericGrade = 45; break;
+            default: numericGrade = 0;
+          }
+        }
+      }
+      
+      // Count completed courses that meet minimum grade requirements
+      if (grade.status === 'completed' && numericGrade >= minGradeRequired) {
+        completedCourses++;
+      } else if (grade.status === 'in-progress') {
+        // Count in-progress courses toward graduation progress
+        inProgressCourses++;
+      }
+    });
+  }
+  
+  // Calculate graduation projection
+  const now = getCurrentDateET();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  
+  // Calculate total courses required (default to 40 if not specified)
+  const totalRequiredCourses = programInfo?.total_credits || 40;
+  
+  // Calculate remaining courses, accounting for in-progress courses
+  const effectiveCompletedCourses = completedCourses + inProgressCourses;
+  const remainingCourses = Math.max(0, totalRequiredCourses - effectiveCompletedCourses);
+  
+  // Standard course load
+  const coursesPerTerm = 5;
+  
+  // Special case: if 5 or fewer courses remaining, graduate next term
+  let graduationTerm: string;
+  let graduationYear = currentYear;
+  let graduationMonth = currentMonth;
+  
+  // Determine current term
+  const isFallTerm = currentMonth >= 8 && currentMonth <= 11; // Sept-Dec
+  const isWinterTerm = currentMonth >= 0 && currentMonth <= 3; // Jan-Apr
+  const isSpringTerm = currentMonth >= 4 && currentMonth <= 7; // May-Aug
+  
+  if (remainingCourses <= coursesPerTerm) {
+    // Student will graduate next term
+    if (isFallTerm) {
+      // If currently in Fall, graduate in Winter
+      graduationTerm = "Winter";
+      graduationMonth = 0; // January
+      graduationYear = currentYear + 1;
+    } else if (isWinterTerm) {
+      // If currently in Winter, graduate in Spring
+      graduationTerm = "Spring";
+      graduationMonth = 4; // May
+    } else {
+      // If currently in Spring, graduate in Fall
+      graduationTerm = "Fall";
+      graduationMonth = 8; // September
+    }
+  } else {
+    // Calculate terms needed to complete remaining courses
+    // Each term can handle 5 courses, but only count Fall and Winter terms
+    const termsNeeded = Math.ceil(remainingCourses / coursesPerTerm);
+    
+    // We need to advance by the required number of terms, but only counting Fall and Winter
+    let termCount = 0;
+    let monthCount = 0;
+    let yearCount = 0;
+    
+    // Initial month and year
+    let month = currentMonth;
+    let year = currentYear;
+    
+    // If we're in Spring term, move to Fall since we don't count Spring courses
+    if (isSpringTerm) {
+      month = 8; // September (start of Fall)
+    }
+    
+    while (termCount < termsNeeded) {
+      // Move to next month
+      month++;
+      monthCount++;
+      
+      // Handle year rollover
+      if (month > 11) {
+        month = 0;
+        year++;
+        yearCount++;
+      }
+      
+      // Only count Fall and Winter terms
+      if ((month == 8) || (month == 0)) { // September or January
+        termCount++;
+      }
+    }
+    
+    // Determine final graduation term
+    if (month >= 0 && month <= 3) {
+      graduationTerm = "Winter";
+      graduationMonth = 0; // January
+    } else if (month >= 4 && month <= 7) {
+      graduationTerm = "Spring";
+      graduationMonth = 4; // May
+    } else {
+      graduationTerm = "Fall";
+      graduationMonth = 8; // September
+    }
+    
+    graduationYear = year;
+  }
+  
+  // Determine convocation ceremony (Spring or Fall) based on course completion term
+  let ceremonyTerm = "";
+  let ceremonyYear = graduationYear;
+  
+  // Map academic term to convocation ceremony
+  if (graduationTerm === "Winter" || graduationTerm === "Spring") {
+    // Winter term (Jan-Apr) and Spring term (May-Aug) completions attend Spring convocation
+    ceremonyTerm = "Spring";
+    // Ceremony is in the same year courses are completed
+  } else {
+    // Fall term (Sept-Dec) completions attend Fall convocation
+    ceremonyTerm = "Fall";
+    // Ceremony is in the same year courses are completed
+  }
+  
+  // Only use ceremony term and year for display
+  const ceremonyDisplay = `${ceremonyTerm} ${ceremonyYear}`;
+  
+  // Prepare graduation projection data to pass to GradesList
+  const graduationProjection = {
+    projectedDate: "", // Empty string to satisfy TypeScript
+    termDisplay: ceremonyDisplay,
+    coursesPerTerm,
+    remainingCourses,
+    totalRequiredCourses,
+    isCeremony: true // Flag to indicate this is a ceremony projection
+  };
+
   return (
     <main className="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen py-6">
       <Toaster position="top-right" />
@@ -194,7 +370,8 @@ export default async function GradesPage() {
         <div className="mb-8">
           <GradesList 
             grades={grades || []} 
-            decryptedGrades={decryptedGrades} 
+            decryptedGrades={decryptedGrades}
+            graduationProjection={graduationProjection}
           />
         </div>
 
