@@ -72,8 +72,8 @@ export default function TestimonialsPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900">Student Testimonials</h1>
-        <p className="text-lg text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Student Testimonials</h1>
+        <p className="text-lg text-gray-600 dark:text-gray-300">
           Don't just take our word for it. Here's what Brock University students have to say about their
           experience with CourseMix.
         </p>
@@ -81,21 +81,21 @@ export default function TestimonialsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {testimonials.map((testimonial) => (
-          <div key={testimonial.id} className="bg-gray-50 rounded-lg p-6 shadow-sm">
+          <div key={testimonial.id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-sm dark:shadow-gray-900/30 dark:border dark:border-gray-700">
             <div className="flex flex-col h-full">
               <div className="mb-4">
-                <svg className="h-8 w-8 text-teal-500" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="h-8 w-8 text-teal-500 dark:text-teal-400" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
                 </svg>
               </div>
               <div className="flex-grow">
-                <p className="text-gray-600 italic mb-6">{testimonial.quote}</p>
+                <p className="text-gray-600 dark:text-gray-300 italic mb-6">{testimonial.quote}</p>
               </div>
               <div className="flex items-center mt-4">
-                <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+                <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
                 <div className="ml-4">
-                  <h3 className="font-medium text-gray-800">{testimonial.name}</h3>
-                  <div className="text-sm text-gray-500">{testimonial.program}, {testimonial.year}</div>
+                  <h3 className="font-medium text-gray-800 dark:text-gray-100">{testimonial.name}</h3>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">{testimonial.program}, {testimonial.year}</div>
                 </div>
               </div>
             </div>
@@ -103,22 +103,22 @@ export default function TestimonialsPage() {
         ))}
       </div>
 
-      <div className="bg-teal-50 rounded-lg p-8 text-center">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Join Our Community</h2>
-        <p className="text-gray-600 max-w-2xl mx-auto mb-6">
+      <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-8 text-center border border-teal-100 dark:border-teal-800">
+        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Join Our Community</h2>
+        <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-6">
           Experience the benefits of CourseMix that thousands of Brock students are already enjoying.
           Optimize your course planning, make informed academic decisions, and simplify your student life.
         </p>
-        <button className="bg-teal-600 text-white px-6 py-3 rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors">
+        <button className="bg-teal-600 dark:bg-teal-500 text-white px-6 py-3 rounded-md hover:bg-teal-700 dark:hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors">
           Create Your Free Account
         </button>
       </div>
 
       <div className="text-center space-y-4">
-        <h2 className="text-2xl font-semibold text-gray-800">Share Your Experience</h2>
-        <p className="text-gray-600 max-w-2xl mx-auto">
+        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">Share Your Experience</h2>
+        <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
           Are you a CourseMix user with a story to share? We'd love to hear about your experience!
-          Contact us at <a href="mailto:testimonials@coursemix.ca" className="text-teal-600 hover:underline">testimonials@coursemix.ca</a>
+          Contact us at <a href="mailto:testimonials@coursemix.ca" className="text-teal-600 dark:text-teal-400 hover:underline">testimonials@coursemix.ca</a>
         </p>
       </div>
     </div>

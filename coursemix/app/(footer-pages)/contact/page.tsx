@@ -68,8 +68,8 @@ export default function ContactPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900">Contact Us</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Contact Us</h1>
+        <p className="text-gray-600 dark:text-gray-300">
           We'd love to hear from you! Whether you have a question, feedback, or just want to say hello,
           feel free to reach out using the form below or through our other contact channels.
         </p>
@@ -78,20 +78,20 @@ export default function ContactPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
           {status.submitted && status.success && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-md text-green-700 mb-4">
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-green-700 dark:text-green-300 mb-4">
               Thank you for your message! We'll get back to you soon.
             </div>
           )}
           
           {status.submitted && !status.success && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700 mb-4">
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 mb-4">
               {status.error}
             </div>
           )}
           
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Full Name
               </label>
               <input
@@ -101,13 +101,13 @@ export default function ContactPage() {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-teal-500 focus:border-teal-500 dark:focus:ring-teal-400 dark:focus:border-teal-400"
                 placeholder="Your name"
               />
             </div>
             
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Email Address
               </label>
               <input
@@ -117,13 +117,13 @@ export default function ContactPage() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-teal-500 focus:border-teal-500 dark:focus:ring-teal-400 dark:focus:border-teal-400"
                 placeholder="you@example.com"
               />
             </div>
             
             <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Subject
               </label>
               <input
@@ -133,13 +133,13 @@ export default function ContactPage() {
                 value={formData.subject}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-teal-500 focus:border-teal-500 dark:focus:ring-teal-400 dark:focus:border-teal-400"
                 placeholder="What is this regarding?"
               />
             </div>
             
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Message
               </label>
               <textarea
@@ -149,7 +149,7 @@ export default function ContactPage() {
                 value={formData.message}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-teal-500 focus:border-teal-500 dark:focus:ring-teal-400 dark:focus:border-teal-400"
                 placeholder="Your message here..."
               ></textarea>
             </div>
@@ -157,7 +157,7 @@ export default function ContactPage() {
             <button
               type="submit"
               disabled={status.submitting}
-              className={`w-full bg-teal-600 text-white py-2 px-4 rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors ${
+              className={`w-full bg-teal-600 dark:bg-teal-500 text-white py-2 px-4 rounded-md hover:bg-teal-700 dark:hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors ${
                 status.submitting ? 'opacity-70 cursor-not-allowed' : ''
               }`}
             >
@@ -165,27 +165,27 @@ export default function ContactPage() {
             </button>
           </form>
           
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             We'll never share your email with anyone else.
           </p>
         </div>
         
         <div className="space-y-6">
-          <div className="bg-gray-50 p-6 rounded-lg">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Other Ways to Reach Us</h3>
+          <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg border dark:border-gray-700">
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Other Ways to Reach Us</h3>
             
             <div className="space-y-4">
               <div>
-                <h4 className="font-medium text-gray-700">Email</h4>
-                <a href="mailto:coursemixtroubleshoot@gmail.com" className="text-teal-600 hover:underline">
+                <h4 className="font-medium text-gray-700 dark:text-gray-200">Email</h4>
+                <a href="mailto:coursemixtroubleshoot@gmail.com" className="text-teal-600 dark:text-teal-400 hover:underline">
                   coursemixtroubleshoot@gmail.com
                 </a>
               </div>
               
               <div>
-                <h4 className="font-medium text-gray-700">Social Media</h4>
+                <h4 className="font-medium text-gray-700 dark:text-gray-200">Social Media</h4>
                 <div className="flex space-x-4 mt-2">
-                  <a href="#" className="text-gray-600 hover:text-teal-600">
+                  <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400">
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path
                         fillRule="evenodd"
@@ -194,7 +194,7 @@ export default function ContactPage() {
                       />
                     </svg>
                   </a>
-                  <a href="#" className="text-gray-600 hover:text-teal-600">
+                  <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400">
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path
                         fillRule="evenodd"
@@ -203,7 +203,7 @@ export default function ContactPage() {
                       />
                     </svg>
                   </a>
-                  <a href="#" className="text-gray-600 hover:text-teal-600">
+                  <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400">
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path
                         d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"
@@ -214,25 +214,25 @@ export default function ContactPage() {
               </div>
               
               <div>
-                <h4 className="font-medium text-gray-700">Office Hours</h4>
-                <p className="text-gray-600">Monday - Friday: 9:00 AM - 5:00 PM</p>
-                <p className="text-gray-600">Saturday - Sunday: Closed</p>
+                <h4 className="font-medium text-gray-700 dark:text-gray-200">Office Hours</h4>
+                <p className="text-gray-600 dark:text-gray-300">Monday - Friday: 9:00 AM - 5:00 PM</p>
+                <p className="text-gray-600 dark:text-gray-300">Saturday - Sunday: Closed</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-gray-50 p-6 rounded-lg">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Frequently Asked Questions</h3>
+          <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg border dark:border-gray-700">
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Frequently Asked Questions</h3>
             <div className="space-y-4">
               <div>
-                <h4 className="font-medium text-gray-700">How do I reset my password?</h4>
-                <p className="text-gray-600">
+                <h4 className="font-medium text-gray-700 dark:text-gray-200">How do I reset my password?</h4>
+                <p className="text-gray-600 dark:text-gray-300">
                   You can reset your password by clicking "Forgot Password" on the login page.
                 </p>
               </div>
               <div>
-                <h4 className="font-medium text-gray-700">Is CourseMix affiliated with Brock University?</h4>
-                <p className="text-gray-600">
+                <h4 className="font-medium text-gray-700 dark:text-gray-200">Is CourseMix affiliated with Brock University?</h4>
+                <p className="text-gray-600 dark:text-gray-300">
                   CourseMix is an independent platform created by Brock students to help their peers.
                 </p>
               </div>

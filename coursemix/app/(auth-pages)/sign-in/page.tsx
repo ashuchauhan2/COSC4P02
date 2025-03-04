@@ -46,23 +46,23 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 px-4 py-8">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 px-4 py-8">
       <div className="w-full max-w-md space-y-8">
         {/* Logo/Brand Section */}
         <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             Course Mix
           </h1>
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
             Welcome back
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Sign in to continue to your dashboard
           </p>
         </div>
 
         {/* Sign In Form */}
-        <div className="mt-8 bg-white px-6 py-8 shadow-xl rounded-xl border border-gray-100">
+        <div className="mt-8 bg-white dark:bg-gray-800 px-6 py-8 shadow-xl rounded-xl border border-gray-100 dark:border-gray-700">
           <SearchParamsWrapper />
           
           {error && (
@@ -77,7 +77,7 @@ export default function Login() {
             <div>
               <label 
                 htmlFor="email" 
-                className="block text-sm font-medium leading-6 text-gray-900"
+                className="block text-sm font-medium leading-6 text-gray-900 dark:text-gray-200"
               >
                 Email address
               </label>
@@ -88,7 +88,7 @@ export default function Login() {
                   type="email"
                   autoComplete="email"
                   required
-                  className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
+                  className="h-11 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-teal-500 focus:ring-teal-500 dark:text-white"
                   placeholder="Enter your email"
                 />
               </div>
@@ -97,7 +97,7 @@ export default function Login() {
             <div>
               <label 
                 htmlFor="password" 
-                className="block text-sm font-medium leading-6 text-gray-900"
+                className="block text-sm font-medium leading-6 text-gray-900 dark:text-gray-200"
               >
                 Password
               </label>
@@ -108,7 +108,7 @@ export default function Login() {
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="h-11 bg-gray-50 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
+                  className="h-11 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-teal-500 focus:ring-teal-500 dark:text-white"
                   placeholder="Enter your password"
                 />
               </div>
@@ -120,9 +120,9 @@ export default function Login() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-teal-600 focus:ring-teal-500 dark:bg-gray-700"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-200">
                   Remember me
                 </label>
               </div>
@@ -130,7 +130,7 @@ export default function Login() {
               <div className="text-sm">
                 <Link 
                   href="/forgot-password" 
-                  className="font-medium text-teal-600 hover:text-teal-500 transition-colors"
+                  className="font-medium text-teal-600 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300 transition-colors"
                 >
                   Forgot password?
                 </Link>
@@ -158,10 +158,10 @@ export default function Login() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-gray-200 dark:border-gray-700" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">
+                <span className="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400">
                   New to Course Mix?
                 </span>
               </div>
@@ -171,7 +171,7 @@ export default function Login() {
               <Link href="/sign-up" className="w-full block">
                 <Button 
                   variant="outline" 
-                  className="w-full h-11 border-gray-200 hover:border-teal-500 hover:text-teal-600 transition-colors"
+                  className="w-full h-11 border-gray-200 dark:border-gray-700 hover:border-teal-500 hover:text-teal-600 dark:text-gray-200 dark:hover:text-teal-400 transition-colors"
                 >
                   Create an account
                 </Button>

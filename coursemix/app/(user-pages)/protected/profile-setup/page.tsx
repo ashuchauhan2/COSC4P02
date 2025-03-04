@@ -102,29 +102,29 @@ export default async function ProfileSetupPage({
   };
 
   return (
-    <main className="bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen py-10">
+    <main className="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen py-10">
       <div className="container mx-auto px-4 max-w-2xl">
         <div className="flex flex-col items-center justify-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-emerald-600">
+          <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-emerald-600 dark:from-teal-400 dark:to-emerald-400">
             Complete Your Profile
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl text-center">
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl text-center">
             Please provide your information to complete your account setup
           </p>
         </div>
 
         {searchParams?.message && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-6">
             {searchParams.message}
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
           <div className="p-6">
             <form action={createProfile}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     First Name *
                   </label>
                   <input
@@ -132,12 +132,12 @@ export default async function ProfileSetupPage({
                     name="first_name"
                     type="text"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Last Name *
                   </label>
                   <input
@@ -145,12 +145,12 @@ export default async function ProfileSetupPage({
                     name="last_name"
                     type="text"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="student_number" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="student_number" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Student Number *
                   </label>
                   <input
@@ -158,22 +158,22 @@ export default async function ProfileSetupPage({
                     name="student_number"
                     type="text"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Your unique student ID number. This must be unique across all users.
                   </p>
                 </div>
 
                 <div>
-                  <label htmlFor="program_id" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="program_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Program *
                   </label>
                   <select
                     id="program_id"
                     name="program_id"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   >
                     <option value="">Select a program</option>
                     {programs?.map((program) => (
@@ -185,7 +185,7 @@ export default async function ProfileSetupPage({
                 </div>
 
                 <div>
-                  <label htmlFor="target_average" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="target_average" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Target Average
                   </label>
                   <input
@@ -194,22 +194,22 @@ export default async function ProfileSetupPage({
                     type="number"
                     min="0"
                     max="100"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Optional: Your target GPA for your academic journey
                   </p>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="submit"
-                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-3 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white font-medium py-3 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
                 >
                   Complete Profile Setup
                 </button>
-                <p className="text-center text-gray-500 text-sm mt-4">
+                <p className="text-center text-gray-500 dark:text-gray-400 text-sm mt-4">
                   * Required fields
                 </p>
               </div>

@@ -6,6 +6,8 @@ import { PageTransition } from "@/components/navigation-transitions/PageTransiti
 import NavigationProgress from "@/components/navigation-transitions/NavigationProgress";
 import ScrollManager from "@/components/navigation-transitions/ScrollManager";
 import LinkPreloader from "@/components/navigation-transitions/LinkPreloader";
+import { ThemeProvider } from "@/components/theme/theme-provider";
+import { FixedThemeToggle } from "@/components/theme/fixed-theme-toggle";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -29,15 +31,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={geistSans.className} suppressHydrationWarning>
-      <body className="antialiased min-h-screen flex flex-col">
-        <NavigationProgress />
-        <ScrollManager />
-        <LinkPreloader />
-        <Navbar />
-        <PageTransition>
-          {children}
-        </PageTransition>
-        <Footer />
+      <body className="antialiased min-h-screen flex flex-col bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-50">
+        <ThemeProvider>
+          <NavigationProgress />
+          <ScrollManager />
+          <LinkPreloader />
+          <Navbar />
+          <PageTransition>
+            {children}
+          </PageTransition>
+          <Footer />
+          <FixedThemeToggle />
+        </ThemeProvider>
       </body>
     </html>
   );

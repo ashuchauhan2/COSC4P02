@@ -817,11 +817,11 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Search Courses</h2>
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Search Courses</h2>
         
         {/* Popular Subjects */}
         <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-2">Popular Subjects:</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">Popular Subjects:</p>
           <div className="flex flex-wrap gap-2">
             {popularSubjects.map((subject) => (
               <button
@@ -830,8 +830,8 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors
                   ${
                     selectedSubject === subject.code
-                      ? 'bg-teal-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-teal-600 text-white dark:bg-teal-500'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
                   }`}
               >
                 {subject.code}
@@ -850,7 +850,7 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
               // Trigger search with new duration
               searchCourses(searchQuery, selectedSubject, duration);
             }}
-            className="w-full md:w-48 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all text-gray-700"
+            className="w-full md:w-48 p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all text-gray-700 dark:text-gray-200 dark:bg-gray-800"
           >
             <option value={0}>All Durations</option>
             <option value={1}>Full Year</option>
@@ -866,12 +866,12 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="Enter course code (e.g., COSC 4P02)"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all dark:bg-gray-800 dark:text-gray-100"
               autoComplete="off"
             />
             {loading && (
               <div className="absolute right-3 top-3">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-teal-500"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-teal-500 dark:border-teal-400"></div>
               </div>
             )}
           </div>
@@ -879,7 +879,7 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
           {message && (
             <div
               className={`p-4 rounded-md ${
-                message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                message.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300'
               }`}
             >
               {message.text}
@@ -890,10 +890,10 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
 
       {courses.length > 0 ? (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-800">
+          <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
             Found {courses.length} course{courses.length !== 1 ? 's' : ''}
           </h3>
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {courses.map((course) => {
               const isEnrolled = enrolledCourseIds.has(course.id);
               const durationInfo = getDurationInfo(course.course_duration);
@@ -904,15 +904,15 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
                   <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <h3 className="text-xl font-semibold text-gray-800">
+                        <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
                           {course.course_code}
                         </h3>
                         
                         {courseTypeInfo && (
                           <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                             courseTypeInfo.isOnline 
-                              ? 'bg-blue-100 text-blue-800' 
-                              : 'bg-gray-100 text-gray-800'
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' 
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                           }`}>
                             {courseTypeInfo.description}
                           </span>
@@ -921,7 +921,7 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
                       
                       <div className="mt-3 space-y-2">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-x-6 text-sm">
-                          <p className="flex items-center text-gray-600">
+                          <p className="flex items-center text-gray-600 dark:text-gray-300">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
@@ -929,7 +929,7 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
                           </p>
                           
                           {course.instructor && (
-                            <p className="flex items-center text-gray-600">
+                            <p className="flex items-center text-gray-600 dark:text-gray-300">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
@@ -939,7 +939,7 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
                         </div>
                         
                         {(course.start_date || course.end_date) && (
-                          <p className="flex items-center text-sm text-gray-600">
+                          <p className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -953,12 +953,12 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
                         )}
                         
                         {courseTypeInfo && (
-                          <p className="flex items-center text-sm text-gray-600">
+                          <p className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                             {courseTypeInfo.icon}
                             <span>
                               <span className="font-medium">{courseTypeInfo.description}</span>
                               {courseTypeInfo.isOnline && 
-                                <span className="ml-1 px-1.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded">
+                                <span className="ml-1 px-1.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded">
                                   ONLINE
                                 </span>
                               }
@@ -967,7 +967,7 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
                         )}
                         
                         {durationInfo && (
-                          <p className="flex items-center text-sm text-gray-600">
+                          <p className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                             {durationInfo.icon}
                             <span>
                               <span className="font-medium">{durationInfo.description}</span>
@@ -985,8 +985,8 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
                           disabled={droppingCourse === course.id}
                           className={`px-6 py-3 rounded-md text-white shadow-sm hover:shadow-md transition-all w-full md:w-auto ${
                             droppingCourse === course.id
-                              ? 'bg-gray-400 cursor-not-allowed'
-                              : 'bg-red-600 hover:bg-red-700'
+                              ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                              : 'bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600'
                           }`}
                         >
                           {droppingCourse === course.id ? (
@@ -1004,8 +1004,8 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
                           disabled={enrollingCourse === course.id}
                           className={`px-6 py-3 rounded-md text-white shadow-sm hover:shadow-md transition-all w-full md:w-auto ${
                             enrollingCourse === course.id
-                              ? 'bg-gray-400 cursor-not-allowed'
-                              : 'bg-teal-600 hover:bg-teal-700'
+                              ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                              : 'bg-teal-600 hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-600'
                           }`}
                         >
                           {enrollingCourse === course.id ? (
@@ -1027,8 +1027,8 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
         </div>
       ) : searchQuery.length > 1 && !loading ? (
         <div className="text-center py-8">
-          <h3 className="text-lg font-medium text-gray-800">No courses found</h3>
-          <p className="text-gray-600">Try a different search term</p>
+          <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">No courses found</h3>
+          <p className="text-gray-600 dark:text-gray-300">Try a different search term</p>
         </div>
       ) : null}
 
@@ -1038,47 +1038,47 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             {/* Background overlay */}
             <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+              <div className="absolute inset-0 bg-gray-500 opacity-75 dark:bg-gray-900 dark:opacity-80"></div>
             </div>
 
             {/* Modal panel */}
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="sm:flex sm:items-start">
-                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600 dark:text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                   </div>
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
                       Schedule Conflict Detected
                     </h3>
                     <div className="mt-2">
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-300">
                         There {courseConflicts.length === 1 ? 'is' : 'are'} {courseConflicts.length} scheduling conflict{courseConflicts.length !== 1 ? 's' : ''} with your currently enrolled courses:
                       </p>
                       <div className="mt-4 space-y-3">
                         {courseConflicts.map((conflict) => (
-                          <div key={conflict.id} className="border border-gray-200 rounded-md p-3 bg-gray-50">
-                            <p className="font-medium text-gray-700">{conflict.course_code}</p>
-                            <p className="text-sm text-gray-600 mt-1">
+                          <div key={conflict.id} className="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-700/50">
+                            <p className="font-medium text-gray-700 dark:text-gray-200">{conflict.course_code}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                               {conflict.course_days} - {conflict.class_time}
                             </p>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
                               {conflict.instructor && (`Instructor: ${conflict.instructor}`)}
                             </p>
                           </div>
                         ))}
                       </div>
-                      <p className="mt-4 text-sm text-red-600 font-medium">
+                      <p className="mt-4 text-sm text-red-600 dark:text-red-400 font-medium">
                         Are you sure you want to enroll in this course despite the schedule conflict?
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+              <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                 <button
                   type="button"
                   onClick={() => {
@@ -1087,7 +1087,7 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
                       proceedWithEnrollment(pendingCourseId);
                     }
                   }}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-yellow-600 text-base font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-yellow-600 dark:bg-yellow-700 text-base font-medium text-white hover:bg-yellow-700 dark:hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:focus:ring-yellow-400 dark:focus:ring-offset-gray-800 sm:ml-3 sm:w-auto sm:text-sm"
                 >
                   Enroll Anyway
                 </button>
@@ -1099,7 +1099,7 @@ export default function CourseSearch({ userId, term, year }: CourseSearchProps) 
                     setCourseConflicts([]);
                     setEnrollingCourse(null);
                   }}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 dark:focus:ring-offset-gray-800 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                 >
                   Cancel
                 </button>

@@ -155,23 +155,23 @@ export default function Timetable({ activeCourses }: TimetableProps) {
   // Early return for empty state
   if (activeCourses.length === 0) {
     return (
-      <div className="w-full h-[calc(100vh-8rem)] max-w-5xl mx-auto p-4 bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
-        <svg className="w-16 h-16 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <div className="w-full h-[calc(100vh-8rem)] max-w-5xl mx-auto p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col items-center justify-center">
+        <svg className="w-16 h-16 mb-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        <p className="text-lg font-medium text-gray-500">No courses found for this term</p>
-        <p className="text-sm mt-2 text-gray-500">Visit the Course Registration page to enroll in courses</p>
+        <p className="text-lg font-medium text-gray-500 dark:text-gray-400">No courses found for this term</p>
+        <p className="text-sm mt-2 text-gray-500 dark:text-gray-400">Visit the Course Registration page to enroll in courses</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-[calc(100vh-8rem)] max-w-5xl mx-auto p-4 bg-white rounded-lg shadow-lg">
+    <div className="w-full h-[calc(100vh-8rem)] max-w-5xl mx-auto p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
       <div className="flex flex-col h-full">
         <div className="grid grid-cols-6 flex-grow">
           {/* Time Labels */}
-          <div className="relative border-r border-gray-200">
-            <div className="h-12 border-b border-gray-200 bg-gray-50"></div>
+          <div className="relative border-r border-gray-200 dark:border-gray-700">
+            <div className="h-12 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"></div>
             <div className="relative h-[calc(100%-3rem)]">
               {Array.from({ length: HOURS_COUNT }, (_, i) => {
                 const hour = TIMETABLE_START + i;
@@ -181,7 +181,7 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                   <div
                     key={i}
                     className={`absolute w-full text-xs font-semibold pr-2 flex items-center justify-end ${
-                      hour < 8 ? "text-gray-400" : "text-gray-600"
+                      hour < 8 ? "text-gray-400 dark:text-gray-500" : "text-gray-600 dark:text-gray-400"
                     }`}
                     style={{
                       top: `${(i / HOURS_COUNT) * 100}%`,
@@ -190,7 +190,7 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                     }}
                   >
                     {formatTime(hour, 0)}
-                    <div className="absolute right-0 w-2 h-[1px] bg-gray-500" />
+                    <div className="absolute right-0 w-2 h-[1px] bg-gray-500 dark:bg-gray-400" />
                   </div>
                 );
               })}
@@ -210,10 +210,10 @@ export default function Timetable({ activeCourses }: TimetableProps) {
             console.log(`Courses for ${day} (${dayLetter}):`, coursesForDay);
 
             return (
-              <div key={day} className="relative border-r border-gray-200">
+              <div key={day} className="relative border-r border-gray-200 dark:border-gray-700">
                 {/* Day Header */}
-                <div className="h-12 border-b border-gray-200 bg-gray-50 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-gray-700">
+                <div className="h-12 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                     <span className="hidden sm:inline">{day}</span>
                     <span className="sm:hidden">{dayAbbreviations[day as keyof typeof dayAbbreviations]}</span>
                   </span>
@@ -227,13 +227,13 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                       <div
                         className={`absolute w-full border-t ${
                           TIMETABLE_START + i === 8
-                            ? "border-gray-300"
-                            : "border-gray-200"
+                            ? "border-gray-300 dark:border-gray-600"
+                            : "border-gray-200 dark:border-gray-700"
                         }`}
                         style={{ top: `${(i / HOURS_COUNT) * 100}%` }}
                       />
                       <div
-                        className="absolute w-full border-t border-gray-100 border-dashed"
+                        className="absolute w-full border-t border-gray-100 dark:border-gray-700 border-dashed"
                         style={{ top: `${((i + 0.5) / HOURS_COUNT) * 100}%` }}
                       />
                     </div>
@@ -241,19 +241,19 @@ export default function Timetable({ activeCourses }: TimetableProps) {
 
                   {/* Add final border line at bottom */}
                   <div
-                    className="absolute w-full border-t border-gray-300"
+                    className="absolute w-full border-t border-gray-300 dark:border-gray-600"
                     style={{ bottom: "0" }}
                   />
 
                   {/* Pre-8am shaded area with "No Classes" text */}
                   <div
-                    className="absolute w-full bg-gray-50/50 flex items-center justify-center"
+                    className="absolute w-full bg-gray-50/50 dark:bg-gray-700/50 flex items-center justify-center"
                     style={{
                       top: 0,
                       height: `${(1 / HOURS_COUNT) * 100}%`,
                     }}
                   >
-                    <span className="text-[10px] text-gray-600 font-bold">
+                    <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold">
                       <p className="">No Classes</p>
                     </span>
                   </div>
@@ -288,7 +288,7 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                         className="absolute rounded-md overflow-hidden shadow-sm backdrop-blur-sm 
                                   border-l-4 w-[95%] mx-auto left-0 right-0
                                   transition-transform hover:scale-[1.02] cursor-pointer
-                                  flex flex-col"
+                                  flex flex-col dark:shadow-gray-900"
                         style={{
                           top: `${top}%`,
                           height: `${height}%`,
@@ -298,19 +298,19 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                           fontSize: height < 10 ? '0.65rem' : '0.75rem',
                         }}
                       >
-                        <div className="font-bold truncate text-gray-800 leading-tight">
+                        <div className="font-bold truncate text-gray-800 dark:text-gray-900 leading-tight">
                           {course.course_code}
                         </div>
                         
                         {/* Always show course type */}
-                        <div className="truncate text-gray-600 leading-tight" 
+                        <div className="truncate text-gray-600 dark:text-gray-700 leading-tight" 
                              style={{ fontSize: height < 10 ? '0.6rem' : '0.65rem' }}>
                           {course.class_type}
                         </div>
 
                         {/* Always show instructor but adjust for small blocks */}
                         {course.instructor && (
-                          <div className="truncate text-gray-500 mt-auto leading-tight" 
+                          <div className="truncate text-gray-500 dark:text-gray-600 mt-auto leading-tight" 
                                style={{ fontSize: height < 10 ? '0.55rem' : '0.6rem' }}>
                             {height <= 10 
                               ? course.instructor.split(",")[0] // Just last name for very small blocks
@@ -326,13 +326,13 @@ export default function Timetable({ activeCourses }: TimetableProps) {
 
                   {/* Post-10pm shaded area with "No Classes" text */}
                   <div
-                    className="absolute w-full bg-gray-50/50 flex items-center justify-center"
+                    className="absolute w-full bg-gray-50/50 dark:bg-gray-700/50 flex items-center justify-center"
                     style={{
                       bottom: 0,
                       height: `${(1 / HOURS_COUNT) * 100}%`,
                     }}
                   >
-                    <span className="text-[10px] text-gray-600 font-bold">
+                    <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold">
                       <p className="">No Classes</p>
                     </span>
                   </div>
@@ -345,8 +345,8 @@ export default function Timetable({ activeCourses }: TimetableProps) {
 
         {/* Online Courses Section */}
         {hasOnlineCourses && (
-          <div className="mt-4 border-t border-gray-200 pt-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+          <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               Online Courses
             </h3>
             <div className="flex flex-wrap gap-2">
@@ -361,17 +361,17 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                     key={course.id || course.enrollment_id}
                     className="p-2 rounded-md shadow-sm backdrop-blur-sm 
                               border-l-4 transition-transform hover:scale-[1.02] cursor-pointer
-                              flex flex-col"
+                              flex flex-col dark:shadow-gray-900"
                     style={{
                       backgroundColor: `hsla(${hue}, 70%, 85%, 0.9)`,
                       borderColor: `hsla(${hue}, 70%, 60%, 1)`,
                       minWidth: '180px',
                     }}
                   >
-                    <div className="font-bold text-gray-800">
+                    <div className="font-bold text-gray-800 dark:text-gray-900">
                       {course.course_code}
                     </div>
-                    <div className="text-xs text-gray-600 mt-1">
+                    <div className="text-xs text-gray-600 dark:text-gray-700 mt-1">
                       {course.class_type === "ASY" ? "Asynchronous Online" :
                       course.class_type === "ASO" ? "Asynchronous Online, In-Person Exam" :
                       course.class_type === "SYN" ? "Synchronous Online" :
@@ -382,7 +382,7 @@ export default function Timetable({ activeCourses }: TimetableProps) {
                       "Online"}
                     </div>
                     {course.instructor && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-gray-500 dark:text-gray-600 mt-1">
                         {course.instructor}
                       </div>
                     )}

@@ -298,13 +298,13 @@ export default async function DashboardPage() {
   };
 
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800">Welcome back, {userProfile.first_name}</h1>
+    <div className="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen py-8">
+      <div className="max-w-7xl mx-auto px-4 h-full">
+        <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-gray-100">Welcome back, {userProfile.first_name}</h1>
         
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 min-h-[calc(100vh-12rem)]">
           {/* Left sidebar with user profile */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 h-full flex">
             <UserProfile 
               userProfile={userProfile} 
               program={program} 
@@ -317,7 +317,7 @@ export default async function DashboardPage() {
           </div>
           
           {/* Main content with timetable */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 h-full flex">
             <Timetable activeCourses={activeCourses} />
           </div>
         </div>
