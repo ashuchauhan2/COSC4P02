@@ -1,9 +1,11 @@
-import { createClient } from "@/utils/supabase/server";
+"use client";
+
+import { createClient } from "@/utils/supabase/client";
+import { redirect } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Course } from "@/types";
 import ReviewForm from "@/components/course-reviews/ReviewForm";
 
-// Main component for the Course Reviews Page
 export default function CourseReviewsPage() {
   // State to hold the list of courses the user is enrolled in
   const [courses, setCourses] = useState<Course[]>([]);
@@ -15,11 +17,13 @@ export default function CourseReviewsPage() {
     // Async function to fetch courses
     async function fetchCourses() {
       // Create a Supabase client instance
-      const supabase = await createClient();
+      const supabase = createClient();
       // Get the current authenticated user
       const { data: { user } } = await supabase.auth.getUser();
-      // If no user is authenticated, return early
-      if (!user) return;
+      // If no user is authenticated, redirect to sign-in page
+      if (!user) {
+        return redirect("/sign-in");
+      }
 
       // Fetch the user's enrollments
       const { data: enrollments } = await supabase
@@ -65,4 +69,3 @@ export default function CourseReviewsPage() {
     </div>
   );
 }
-
