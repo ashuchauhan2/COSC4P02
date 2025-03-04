@@ -68,6 +68,7 @@ export default async function DashboardPage() {
 
   // Calculate academic progress
   let completedCourses = 0;
+  let inProgressCourses = 0;
   const numericGrades: number[] = [];
 
   if (grades) {
@@ -103,6 +104,8 @@ export default async function DashboardPage() {
         if (numericGrade !== null) {
           numericGrades.push(numericGrade);
         }
+      } else if (grade.status === 'in-progress') {
+        inProgressCourses++;
       }
     });
   }
@@ -120,6 +123,97 @@ export default async function DashboardPage() {
     displayName: `WINTER ${currentYear}`
   };
   
+  // Calculate graduation projection
+  const now = getCurrentDateET();
+  const currentMonth = now.getMonth();
+  
+  // Calculate total courses required (default to 40 if not specified)
+  const totalRequiredCourses = program?.total_credits || 40;
+  
+  // Calculate remaining courses, accounting for in-progress courses
+  const effectiveCompletedCourses = completedCourses + inProgressCourses;
+  const remainingCourses = Math.max(0, totalRequiredCourses - effectiveCompletedCourses);
+  
+  // Standard course load
+  const coursesPerTerm = 5;
+  
+  // Determine current term based on currentTermRaw
+  const isFallTerm = currentTermRaw.toLowerCase() === "fall";
+  const isWinterTerm = currentTermRaw.toLowerCase() === "winter";
+  const isSpringTerm = currentTermRaw.toLowerCase() === "spring";
+  
+  // Special case: if 5 or fewer courses remaining, graduate next term
+  let graduationTerm: string;
+  let graduationYear = currentYear;
+  
+  if (remainingCourses <= coursesPerTerm) {
+    // Student will graduate next term
+    if (isFallTerm) {
+      // If currently in Fall, graduate in Winter
+      graduationTerm = "Winter";
+      graduationYear = currentYear + 1;
+    } else if (isWinterTerm) {
+      // If currently in Winter, graduate in Spring
+      graduationTerm = "Spring";
+    } else {
+      // If currently in Spring, graduate in Fall
+      graduationTerm = "Fall";
+    }
+  } else {
+    // Calculate terms needed to complete remaining courses
+    // Each term can handle 5 courses, but only count Fall and Winter terms
+    const termsNeeded = Math.ceil(remainingCourses / coursesPerTerm);
+    
+    // Initial term and year
+    let term = currentTermRaw;
+    let year = currentYear;
+    
+    // Advance the required number of terms
+    let termCount = 0;
+    
+    while (termCount < termsNeeded) {
+      // Move to next term
+      if (term.toLowerCase() === "fall") {
+        term = "Winter";
+        year += 1;
+      } else if (term.toLowerCase() === "winter") {
+        term = "Spring";
+      } else {
+        term = "Fall";
+      }
+      
+      // Only count Fall and Winter terms
+      if (term.toLowerCase() === "fall" || term.toLowerCase() === "winter") {
+        termCount++;
+      }
+    }
+    
+    graduationTerm = term;
+    graduationYear = year;
+  }
+  
+  // Determine convocation ceremony (Spring or Fall) based on course completion term
+  let ceremonyTerm = "";
+  let ceremonyYear = graduationYear;
+  
+  // Map academic term to convocation ceremony
+  if (graduationTerm.toLowerCase() === "winter" || graduationTerm.toLowerCase() === "spring") {
+    // Winter term (Jan-Apr) and Spring term (May-Aug) completions attend Spring convocation
+    ceremonyTerm = "Spring";
+    // Ceremony is in the same year courses are completed
+  } else {
+    // Fall term (Sept-Dec) completions attend Fall convocation
+    ceremonyTerm = "Fall";
+    // Ceremony is in the same year courses are completed
+  }
+  
+  // Prepare convocation display
+  const ceremonyDisplay = `${ceremonyTerm} ${ceremonyYear} Convocation`;
+  // Track progress status
+  const progressStatus = remainingCourses > 0 
+    ? "On track with your progress" 
+    : "Ready to graduate";
+
   // Fetch term dates from important_dates table
   const { data: termDates, error: termDatesError } = await supabase
     .from("important_dates")
@@ -426,8 +520,8 @@ export default async function DashboardPage() {
                       </svg>
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Spring 2028</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">On track with your progress</p>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ceremonyDisplay}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{progressStatus}</p>
                     </div>
                   </div>
                 </div>
