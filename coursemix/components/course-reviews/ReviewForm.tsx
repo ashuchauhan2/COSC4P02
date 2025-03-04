@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,82 +6,115 @@ import { toast } from "sonner";
 
 interface ReviewFormProps {
   courseId: string;
+  courseName: string;
 }
 
-export default function ReviewForm({ courseId }: ReviewFormProps) {
+interface Review {
+  id: string;
+  user_id: string;
+  course_id: string;
+  review: string;
+  difficulty: string; // Remove numeric rating, keep difficulty
+}
+
+export default function ReviewForm({ courseId, courseName }: ReviewFormProps) {
   const [review, setReview] = useState("");
-  const [rating, setRating] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState(""); // State for difficulty
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
+  useEffect(() => {
+    async function fetchReviews() {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("reviews")
+        .select("*")
+        .eq("course_id", courseId);
+      if (data) setReviews(data);
+    }
+    fetchReviews();
+  }, [courseId]);
 
+  async function handleSubmit() {
+    setIsSubmitting(true);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setError("User not authenticated");
-      return;
-    }
+    if (!user) return;
 
-    setIsSubmitting(true);
-
-    const { error } = await supabase
-      .from("course_reviews")
-      .insert({
-        user_id: user.id,
-        course_id: courseId,
-        review,
-        rating,
-      });
-
-    if (error) {
-      setError("Failed to submit review");
-    } else {
-      setSuccess("Review submitted successfully");
-      setReview("");
-      setRating(0);
-    }
-
+    // Submit review with difficulty
+    console.log("Submitting review:", { 
+      user_id: user.id, 
+      course_id: courseId, 
+      review, 
+      difficulty 
+    });
+    toast.success("Review submitted (not saved yet, backend needed)");
+    
+    setReview("");
+    setDifficulty(""); // Reset difficulty
     setIsSubmitting(false);
+  }
+
+  // Function to get difficulty color
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case "Easy":
+        return "bg-green-500 hover:bg-green-600";
+      case "Medium":
+        return "bg-yellow-500 hover:bg-yellow-600";
+      case "Hard":
+        return "bg-red-500 hover:bg-red-600";
+      default:
+        return "bg-gray-500 hover:bg-gray-600";
+    }
   };
 
   return (
-    <div className="rounded-lg shadow-sm p-4 border border-gray-200 bg-white transition-all hover:shadow-md group">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex flex-col gap-2">
-          <textarea
-            value={review}
-            onChange={(e) => setReview(e.target.value)}
-            placeholder="Write your review"
-            required
-            className="w-full p-2 border border-gray-300 rounded-md"
-          />
-          <Input
-            type="number"
-            value={rating}
-            onChange={(e) => setRating(Number(e.target.value))}
-            min="1"
-            max="5"
-            required
-            className="w-full p-2 border border-gray-300 rounded-md"
-          />
-        </div>
-        <div className="flex justify-end gap-2">
+    <div>
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">Reviews for {courseName}</h3>
+      {reviews.length === 0 ? (
+        <p className="text-gray-600">No reviews yet.</p>
+      ) : (
+        <ul className="space-y-2">
+          {reviews.map((r) => (
+            <li key={r.id} className="bg-gray-50 p-3 rounded-lg">
+              <span className="text-gray-600">{r.review}</span>
+              <br />
+              <span className={`text-sm px-2 py-1 rounded-full ${getDifficultyColor(r.difficulty)}`}>
+                Difficulty: {r.difficulty}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      
+      <Input 
+        value={review} 
+        onChange={(e) => setReview(e.target.value)} 
+        placeholder="Write a review..." 
+        className="mt-4"
+      />
+
+      {/* Difficulty selection buttons */}
+      <div className="mt-4 space-x-2">
+        {["Easy", "Medium", "Hard"].map((level) => (
           <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors shadow-sm hover:shadow-md"
+            key={level}
+            onClick={() => setDifficulty(level)}
+            className={`${difficulty === level ? getDifficultyColor(level) : "bg-gray-300"} text-white`}
           >
-            Submit Review
+            {level}
           </Button>
-        </div>
-        {error && <p className="text-red-500">{error}</p>}
-        {success && <p className="text-green-500">{success}</p>}
-      </form>
+        ))}
+      </div>
+      
+      <Button 
+        onClick={handleSubmit} 
+        disabled={isSubmitting || !difficulty}
+        className="bg-teal-600 hover:bg-teal-700 text-white mt-4 font-medium py-2 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
+      >
+        Submit Review
+      </Button>
     </div>
   );
 }

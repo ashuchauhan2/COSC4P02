@@ -7,65 +7,66 @@ import { Course } from "@/types";
 import ReviewForm from "@/components/course-reviews/ReviewForm";
 
 export default function CourseReviewsPage() {
-  // State to hold the list of courses the user is enrolled in
   const [courses, setCourses] = useState<Course[]>([]);
-  // State to manage the loading state
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // useEffect hook to fetch courses when the component mounts
   useEffect(() => {
-    // Async function to fetch courses
     async function fetchCourses() {
-      // Create a Supabase client instance
       const supabase = createClient();
-      // Get the current authenticated user
       const { data: { user } } = await supabase.auth.getUser();
-      // If no user is authenticated, redirect to sign-in page
-      if (!user) {
-        return redirect("/sign-in");
-      }
+      if (!user) return redirect("/sign-in");
 
-      // Fetch the user's enrollments
       const { data: enrollments } = await supabase
         .from("enrollments")
         .select("course_id")
         .eq("user_id", user.id)
         .eq("status", "enrolled");
 
-      // If enrollments are found, fetch the corresponding courses
       if (enrollments) {
         const courseIds = enrollments.map((enrollment: { course_id: string }) => enrollment.course_id);
         const { data: courses } = await supabase
           .from("courses")
           .select("*")
           .in("id", courseIds);
-        // Update the state with the fetched courses
-        if (courses) {
-          setCourses(courses);
-        }
+
+        if (courses) setCourses(courses);
       }
-      // Set loading to false after fetching is complete
       setLoading(false);
     }
-
-    // Call the fetchCourses function
     fetchCourses();
-  }, []); // Empty dependency array means this runs once when the component mounts
+  }, []);
 
-  // If the data is still loading, display a loading message
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className="text-center text-gray-600">Loading...</p>;
 
-  // Render the list of courses and the review form for each course
   return (
-    <div>
-      <h1>Course Reviews</h1>
-      {courses.map(course => (
-        <div key={course.id}>
-          <h2>{course.course_code}</h2>
-          {/* Render the ReviewForm component for each course */}
-          <ReviewForm courseId={course.id} />
-        </div>
-      ))}
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">Course Reviews</h1>
+      {courses.length === 0 ? (
+        <p className="text-gray-600">No courses available for review.</p>
+      ) : (
+        <>
+          <select 
+            onChange={(e) => {
+              const course = courses.find(c => c.id === e.target.value);
+              setSelectedCourse(course || null);
+            }}
+            className="mb-4 p-2 border border-gray-300 rounded-lg w-full max-w-md"
+          >
+            <option value="">Select a course</option>
+            {courses.map(course => (
+              <option key={course.id} value={course.id}>{course.course_code}</option>
+            ))}
+          </select>
+          
+          {selectedCourse && (
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">{selectedCourse.course_code}</h2>
+              <ReviewForm courseId={selectedCourse.id} courseName={selectedCourse.course_code} />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
