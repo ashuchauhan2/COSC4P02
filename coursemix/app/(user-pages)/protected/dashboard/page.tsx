@@ -5,6 +5,9 @@ import UserProfile from "@/components/dashboard/UserProfile";
 import { getCurrentTerm, getCurrentDateET, toEasternTime } from "@/utils/date-utils";
 import { Course, Term, ExtendedTermInfo } from "@/types";
 import { numericToLetterGrade, decryptGrade } from "@/utils/grade-utils";
+import DegreeProgress from "@/components/dashboard/DegreeProgress";
+import Deadlines from "@/components/dashboard/Deadlines";
+import WeatherWidget from "@/components/dashboard/WeatherWidget";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -298,27 +301,189 @@ export default async function DashboardPage() {
   };
 
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen py-8">
+    <div className="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen py-6">
       <div className="max-w-7xl mx-auto px-4 h-full">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-gray-100">Welcome back, {userProfile.first_name}</h1>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 min-h-[calc(100vh-12rem)]">
-          {/* Left sidebar with user profile */}
-          <div className="lg:col-span-1 h-full flex">
-            <UserProfile 
-              userProfile={userProfile} 
-              program={program} 
-              termInfo={termInfo}
-              academicProgress={{
-                currentAverage,
-                completedCourses
-              }}
-            />
+        <div className="flex flex-col gap-6">
+          {/* Welcome Header */}
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">
+              Welcome back, {userProfile.first_name}
+            </h1>
           </div>
           
-          {/* Main content with timetable */}
-          <div className="lg:col-span-3 h-full flex">
-            <Timetable activeCourses={activeCourses} />
+          {/* Main Dashboard Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Profile Card - Left Sidebar */}
+            <div className="lg:col-span-3">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow h-full">
+                {/* User Profile Section */}
+                <div className="p-5 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex flex-col items-center">
+                    {/* Profile Image */}
+                    <div className="relative w-20 h-20 mb-3">
+                      <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                        <svg
+                          className="w-12 h-12 text-gray-400 dark:text-gray-500"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* User Name */}
+                    <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1">
+                      {userProfile.first_name} {userProfile.last_name}
+                    </h2>
+
+                    {/* Program */}
+                    <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-3">
+                      {program.program_name}
+                    </p>
+                    
+                    {/* Student Number */}
+                    {userProfile.student_number && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        ID: {userProfile.student_number}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Term Info Section */}
+                <div className="p-5 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Current Term</h3>
+                  <p className="text-base font-medium text-gray-800 dark:text-gray-200 mb-3">
+                    {currentTerm.displayName}
+                  </p>
+                  
+                  {/* Term Progress */}
+                  <div className="mb-3">
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      <span>Term Progress</span>
+                      <span>{Math.round(termInfo.progress)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-1">
+                      <div
+                        className="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full"
+                        style={{ width: `${termInfo.progress}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1">
+                      {termInfo.daysRemaining} days remaining
+                    </div>
+                  </div>
+                  
+                  {/* Reading Week Status */}
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Reading Week</div>
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                      {termInfo.readingWeekStatus}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Academic Overview Section */}
+                <div className="p-5 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Academic Overview</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Current Average</span>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                          {currentAverage ? `${currentAverage.toFixed(1)}%` : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Courses This Term</span>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{coursesThisTerm}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Degree Progress */}
+                    <div className="pt-2">
+                      <DegreeProgress 
+                        userId={userProfile.user_id} 
+                        completedCourses={completedCourses} 
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Anticipated Graduation Date Section */}
+                <div className="p-5 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Anticipated Graduation</h3>
+                  <div className="flex items-center">
+                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-md">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Spring 2028</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">On track with your progress</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Weather Widget - replaced with functional component */}
+                <WeatherWidget />
+              </div>
+            </div>
+            
+            {/* Main Content Area - 9 columns on larger screens */}
+            <div className="lg:col-span-9">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Timetable - spans 2/3 of the main content area on larger screens */}
+                <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow h-full">
+                  <h3 className="text-lg font-semibold p-4 border-b border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200">
+                    Weekly Schedule
+                  </h3>
+                  <div className="p-4 h-[calc(100%-4rem)]">
+                    <Timetable activeCourses={activeCourses} />
+                  </div>
+                </div>
+                
+                {/* Navigation and Deadlines Section */}
+                <div className="lg:col-span-1 flex flex-col gap-6 h-full">
+                  {/* Navigation Links - Moved to right side as requested */}
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Quick Navigation</h3>
+                    <div className="w-full space-y-2">
+                      <a 
+                        href="/protected/my-courses" 
+                        className="block w-full text-center py-2 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                      >
+                        My Courses
+                      </a>
+                      <a 
+                        href="/protected/academic-progress" 
+                        className="block w-full text-center py-2 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                      >
+                        Academic Progress
+                      </a>
+                      <a 
+                        href="/protected/course-registration" 
+                       className="block w-full text-center py-2 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                      >
+                        Course Registration
+                      </a>
+                    </div>
+                  </div>
+                  
+                  {/* Deadlines - spans 1/3 of the main content area on larger screens (kept as requested) */}
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex-grow">
+                    <Deadlines userId={userProfile.user_id} />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
