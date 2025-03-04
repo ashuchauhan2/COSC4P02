@@ -14,12 +14,12 @@ interface Review {
   user_id: string;
   course_id: string;
   review: string;
-  difficulty: string; // Remove numeric rating, keep difficulty
+  difficulty: string;
 }
 
 export default function ReviewForm({ courseId, courseName }: ReviewFormProps) {
   const [review, setReview] = useState("");
-  const [difficulty, setDifficulty] = useState(""); // State for difficulty
+  const [difficulty, setDifficulty] = useState("");
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,7 +41,6 @@ export default function ReviewForm({ courseId, courseName }: ReviewFormProps) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Submit review with difficulty
     console.log("Submitting review:", { 
       user_id: user.id, 
       course_id: courseId, 
@@ -51,11 +50,10 @@ export default function ReviewForm({ courseId, courseName }: ReviewFormProps) {
     toast.success("Review submitted (not saved yet, backend needed)");
     
     setReview("");
-    setDifficulty(""); // Reset difficulty
+    setDifficulty("");
     setIsSubmitting(false);
   }
 
-  // Function to get difficulty color
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "Easy":
@@ -71,14 +69,14 @@ export default function ReviewForm({ courseId, courseName }: ReviewFormProps) {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Reviews for {courseName}</h3>
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Reviews for {courseName}</h3>
       {reviews.length === 0 ? (
-        <p className="text-gray-600">No reviews yet.</p>
+        <p className="text-gray-600 dark:text-gray-300">No reviews yet.</p>
       ) : (
         <ul className="space-y-2">
           {reviews.map((r) => (
-            <li key={r.id} className="bg-gray-50 p-3 rounded-lg">
-              <span className="text-gray-600">{r.review}</span>
+            <li key={r.id} className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+              <span className="text-gray-600 dark:text-gray-300">{r.review}</span>
               <br />
               <span className={`text-sm px-2 py-1 rounded-full ${getDifficultyColor(r.difficulty)}`}>
                 Difficulty: {r.difficulty}
@@ -92,16 +90,15 @@ export default function ReviewForm({ courseId, courseName }: ReviewFormProps) {
         value={review} 
         onChange={(e) => setReview(e.target.value)} 
         placeholder="Write a review..." 
-        className="mt-4"
+        className="mt-4 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
       />
 
-      {/* Difficulty selection buttons */}
       <div className="mt-4 space-x-2">
         {["Easy", "Medium", "Hard"].map((level) => (
           <Button
             key={level}
             onClick={() => setDifficulty(level)}
-            className={`${difficulty === level ? getDifficultyColor(level) : "bg-gray-300"} text-white`}
+            className={`${difficulty === level ? getDifficultyColor(level) : "bg-gray-300 dark:bg-gray-600"} text-white`}
           >
             {level}
           </Button>
@@ -111,7 +108,7 @@ export default function ReviewForm({ courseId, courseName }: ReviewFormProps) {
       <Button 
         onClick={handleSubmit} 
         disabled={isSubmitting || !difficulty}
-        className="bg-teal-600 hover:bg-teal-700 text-white mt-4 font-medium py-2 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
+        className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white mt-6 font-medium py-2 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
       >
         Submit Review
       </Button>
