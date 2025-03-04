@@ -27,9 +27,17 @@ interface GroupedGrades {
 interface GradesListProps {
   grades: Grade[];
   decryptedGrades: { [id: string]: string };
+  graduationProjection?: {
+    projectedDate?: string;
+    termDisplay: string;
+    coursesPerTerm: number;
+    remainingCourses: number;
+    totalRequiredCourses: number;
+    isCeremony?: boolean;
+  };
 }
 
-export default function GradesList({ grades, decryptedGrades }: GradesListProps) {
+export default function GradesList({ grades, decryptedGrades, graduationProjection }: GradesListProps) {
   const router = useRouter();
   const [editGradeId, setEditGradeId] = useState<string | null>(null);
   const [editGradeValue, setEditGradeValue] = useState('');
@@ -398,47 +406,50 @@ export default function GradesList({ grades, decryptedGrades }: GradesListProps)
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div className="bg-teal-50 dark:bg-teal-900/20 p-4 rounded-lg border border-teal-100 dark:border-teal-800">
             <h3 className="text-lg font-medium text-teal-700 dark:text-teal-300">Completed</h3>
-            <p className="text-3xl font-bold text-teal-900 dark:text-teal-200">{completedCourses}</p>
+            <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-1">{completedCourses}</p>
+            <p className="text-sm text-teal-600 dark:text-teal-400">Courses</p>
           </div>
           
           <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
             <h3 className="text-lg font-medium text-blue-700 dark:text-blue-300">In Progress</h3>
-            <p className="text-3xl font-bold text-blue-900 dark:text-blue-200">{inProgressCourses}</p>
+            <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-1">{inProgressCourses}</p>
+            <p className="text-sm text-blue-600 dark:text-blue-400">Courses</p>
           </div>
           
-          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-            <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300">Remaining</h3>
-            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{remainingCourses}</p>
+          <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-100 dark:border-purple-800">
+            <h3 className="text-lg font-medium text-purple-700 dark:text-purple-300">Overall GPA</h3>
+            <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-1">{overallGPA.toFixed(2)}</p>
+            <p className="text-sm text-purple-600 dark:text-purple-400">4.0 Scale</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-            <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Brock University Average</h3>
-            <p className={`text-3xl font-bold ${
-              numericalAverage >= 80 ? 'text-green-600' : 
-              numericalAverage >= 70 ? 'text-blue-600' : 
-              numericalAverage >= 60 ? 'text-yellow-600' : 
-              'text-red-600'
-            }`}>
-              {numericalAverage.toFixed(1)}%
-            </p>
-            <p className="text-xs text-gray-500 mt-1">Brock's percentage-based grading system</p>
+        {/* Graduation Projection */}
+        {graduationProjection && (
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 p-5 rounded-lg border border-indigo-100 dark:border-indigo-800 mt-4">
+            <div className="flex items-center">
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-lg font-medium text-indigo-800 dark:text-indigo-200">
+                  Projected Graduation
+                </h4>
+                <p className="text-sm text-indigo-700 dark:text-indigo-300">
+                  {graduationProjection.isCeremony 
+                    ? `Your projected graduation ceremony will be the ${graduationProjection.termDisplay} convocation.`
+                    : `Based on your current progress, you are projected to graduate in ${graduationProjection.termDisplay}.`
+                  }
+                </p>
+                <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
+                  Estimation based on {graduationProjection.coursesPerTerm} courses per term with {graduationProjection.remainingCourses} courses remaining.
+                </p>
+              </div>
+            </div>
           </div>
-
-          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-            <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Standard GPA (4.0 Scale)</h3>
-            <p className={`text-3xl font-bold ${
-              overallGPA >= 3.7 ? 'text-green-600' : 
-              overallGPA >= 3.0 ? 'text-teal-600' : 
-              overallGPA >= 2.0 ? 'text-blue-600' : 
-              'text-red-600'
-            }`}>
-              {overallGPA.toFixed(2)}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">Equivalent to 4.0 scale used at other universities</p>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
