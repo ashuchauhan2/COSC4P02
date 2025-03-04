@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export const metadata = {
   title: 'Testimonials | CourseMix',
@@ -92,7 +93,6 @@ export default function TestimonialsPage() {
                 <p className="text-gray-600 dark:text-gray-300 italic mb-6">{testimonial.quote}</p>
               </div>
               <div className="flex items-center mt-4">
-                <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
                 <div className="ml-4">
                   <h3 className="font-medium text-gray-800 dark:text-gray-100">{testimonial.name}</h3>
                   <div className="text-sm text-gray-500 dark:text-gray-400">{testimonial.program}, {testimonial.year}</div>
@@ -109,16 +109,18 @@ export default function TestimonialsPage() {
           Experience the benefits of CourseMix that thousands of Brock students are already enjoying.
           Optimize your course planning, make informed academic decisions, and simplify your student life.
         </p>
-        <button className="bg-teal-600 dark:bg-teal-500 text-white px-6 py-3 rounded-md hover:bg-teal-700 dark:hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors">
-          Create Your Free Account
-        </button>
+        <Link href="/sign-up">
+          <button className="bg-teal-600 dark:bg-teal-500 text-white px-6 py-3 rounded-md hover:bg-teal-700 dark:hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors">
+            Create Your Free Account
+          </button>
+        </Link>
       </div>
 
       <div className="text-center space-y-4">
         <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">Share Your Experience</h2>
         <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
           Are you a CourseMix user with a story to share? We'd love to hear about your experience!
-          Contact us at <a href="mailto:testimonials@coursemix.ca" className="text-teal-600 dark:text-teal-400 hover:underline">testimonials@coursemix.ca</a>
+          Contact us at <a href="mailto:coursemixtroubleshoot@gmail.com" className="text-teal-600 dark:text-teal-400 hover:underline">coursemixtroubleshoot@gmail.com</a>
         </p>
       </div>
     </div>

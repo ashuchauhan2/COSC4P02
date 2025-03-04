@@ -110,35 +110,35 @@ export default async function EditProfilePage({
   };
 
   return (
-    <main className="bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen py-10">
+    <main className="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen py-10">
       <div className="container mx-auto px-4 max-w-2xl">
         <div className="flex flex-col items-center justify-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-emerald-600">
+          <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-emerald-600 dark:from-teal-400 dark:to-emerald-400">
             Edit Profile
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl text-center">
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl text-center">
             Update your personal and academic information
           </p>
         </div>
 
         {searchParams?.message && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-6">
             {searchParams.message}
           </div>
         )}
 
         {searchParams?.success && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+          <div className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded mb-6">
             {searchParams.success}
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
           <div className="p-6">
             <form action={updateProfile}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     First Name
                   </label>
                   <input
@@ -147,12 +147,12 @@ export default async function EditProfilePage({
                     type="text"
                     required
                     defaultValue={userProfile.first_name}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Last Name
                   </label>
                   <input
@@ -161,12 +161,12 @@ export default async function EditProfilePage({
                     type="text"
                     required
                     defaultValue={userProfile.last_name}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="student_number" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="student_number" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Student Number
                   </label>
                   <input
@@ -175,17 +175,17 @@ export default async function EditProfilePage({
                     type="text"
                     required
                     defaultValue={userProfile.student_number}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="program_id" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="program_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Program
                   </label>
-                  <div className="mb-2 bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-700">
+                  <div className="mb-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md p-3 text-sm text-amber-700 dark:text-amber-300">
                     <div className="flex items-start">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500 dark:text-amber-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
                       <span>
@@ -198,7 +198,7 @@ export default async function EditProfilePage({
                     name="program_id"
                     required
                     defaultValue={userProfile.program_id}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent"
                   >
                     <option value="">Select a program</option>
                     {programs?.map((program) => (
@@ -210,7 +210,7 @@ export default async function EditProfilePage({
                 </div>
 
                 <div>
-                  <label htmlFor="target_average" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="target_average" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Target Average
                   </label>
                   <input
@@ -220,23 +220,23 @@ export default async function EditProfilePage({
                     min="0"
                     max="100"
                     defaultValue={userProfile.target_average || ""}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-between pt-4 border-t border-gray-200">
+              <div className="flex justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                 <Link href="/protected/profile">
                   <button 
                     type="button"
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-2 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
                   >
                     Cancel
                   </button>
                 </Link>
                 <button
                   type="submit"
-                  className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white font-medium py-2 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
                 >
                   Save Changes
                 </button>
