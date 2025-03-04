@@ -276,6 +276,10 @@ def main():
     # Display existing requirements for the selected program
     display_existing_requirements(program_id)
     
+    # Keep adding requirements until user exits
+    print(f"\nContinuously adding requirements to program (ID: {program_id}).")
+    print(f"Type any of {', '.join(EXIT_KEYWORDS)} at any prompt to exit the program.")
+    
     while True:
         # Add a requirement
         add_program_requirement(program_id)
@@ -283,16 +287,9 @@ def main():
         # Show updated requirements
         display_existing_requirements(program_id)
         
-        # Ask if user wants to add another requirement
-        continue_input = input("\nDo you want to add another requirement? (y/n): ").lower()
-        
-        # Check if user wants to exit
-        continue_adding = check_if_exit(continue_input)
-        
-        if continue_adding != 'y':
-            break
+        print(f"\nReady for next requirement. Type any of {', '.join(EXIT_KEYWORDS)} to exit.")
     
-    print("\n👋 Thank you for using Program Requirements Adder!")
+    # Note: We never reach here normally as the program will exit via check_if_exit function
 
 if __name__ == "__main__":
     main()
