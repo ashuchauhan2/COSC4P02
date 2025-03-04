@@ -21,14 +21,32 @@ export function toEasternTime(date: Date) {
  * @param date Date object or string to format
  */
 export function formatDate(date: Date | string): string {
+  if (!date) return "Not set";
+  
+  // If the date is a string, first convert it to a Date object
+  let dateObj: Date;
   if (typeof date === 'string') {
-    date = new Date(date);
+    // For date-only strings (like from date inputs), we need to ensure
+    // we preserve the user's intended date regardless of timezone
+    if (date.length === 10 && date.includes('-')) {
+      // This is a date-only string (YYYY-MM-DD)
+      const [year, month, day] = date.split('-').map(Number);
+      // Create date in local timezone to preserve the exact day
+      dateObj = new Date(year, month - 1, day);
+    } else {
+      // For full ISO strings from the database (timestamptz)
+      dateObj = new Date(date);
+    }
+  } else {
+    dateObj = date;
   }
   
-  return date.toLocaleDateString('en-US', {
+  // Display date in user's local timezone
+  return dateObj.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone: 'UTC' // Force UTC interpretation to avoid double timezone conversion
   });
 }
 
