@@ -138,10 +138,22 @@ export const resetPasswordAction = async (formData: FormData) => {
 };
 
 export const signOutAction = async () => {
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    throw error;
+  try {
+    const supabase = await createClient();
+    // Perform server-side sign-out
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      console.error("Sign out error:", error.message);
+      throw error;
+    }
+    
+    // Give cookies time to clear
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Sign out action failed:", error);
+    return { success: false, error };
   }
-  return { success: true };
 };

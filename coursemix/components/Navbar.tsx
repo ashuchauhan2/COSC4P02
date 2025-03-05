@@ -9,6 +9,7 @@ import { signOutAction } from "@/app/actions";
 import { createBrowserClient } from "@supabase/ssr";
 import { User } from "@supabase/supabase-js";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import React from "react";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -19,70 +20,116 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Create Supabase client inside the component to ensure it's created after hydration
-  const getSupabase = () => createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  );
+  // Create Supabase client inside the component with improved client implementation
+  const getSupabase = () => {
+    // Create the client with explicit session persistence
+    return createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          persistSession: true,  // Ensure session is persisted
+          storageKey: 'supabase.auth.token', // Match the key used elsewhere in the app
+          detectSessionInUrl: true, // Detect session from URL hash
+          flowType: 'pkce', // Use PKCE flow for better security
+        }
+      }
+    );
+  };
 
-  // Immediately check if user is in a protected route
-  // This gives us a quick initial state before Supabase client is ready
+  // Determines initial protected route access - moved outside of useEffect to avoid conditional hook issues
+  const isInProtectedRoute = pathname?.startsWith('/protected');
+  
+  // Pre-auth state management - ensures consistent state on initial render
   useEffect(() => {
     // Only apply this quick check if we're not in the middle of signing out
-    if (!isSigningOut) {
-      const isInProtectedRoute = pathname?.startsWith('/protected');
-      if (isInProtectedRoute && !user) {
-        setUser({ id: 'temp-user-id' } as User); // Temporarily assume logged in if in protected route
-      }
+    if (!isSigningOut && isInProtectedRoute && !user) {
+      setUser({ id: 'temp-user-id' } as User); // Temporarily assume logged in if in protected route
     }
-  }, [pathname, user, isSigningOut]);
+  }, [isInProtectedRoute, user, isSigningOut]);
 
-  // Initialize user state
+  // Create a ref to hold the Supabase client to avoid recreating it
+  const supabaseRef = React.useRef<ReturnType<typeof getSupabase> | null>(null);
+
+  // Initialize and track auth state with optimized implementation
   useEffect(() => {
     let mounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
+    
     setIsLoading(true);
+    
+    // Define a function to get or create the Supabase client
+    const getOrCreateClient = () => {
+      if (!supabaseRef.current) {
+        supabaseRef.current = getSupabase();
+      }
+      return supabaseRef.current;
+    };
     
     const initializeAuthState = async () => {
       try {
-        const supabase = getSupabase();
+        // Get or create the Supabase client
+        const supabase = getOrCreateClient();
         
-        // Check current user state
-        const { data, error } = await supabase.auth.getUser();
+        // First check the session - this is more reliable than getUser()
+        const { data: sessionData } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error("Auth error:", error);
-          if (mounted) setUser(null);
-        } else if (mounted) {
-          setUser(data.user);
+        if (mounted && sessionData.session?.user) {
+          setUser(sessionData.session.user);
+          console.log("Session found on initialization");
         }
         
-        // Set up auth state change listener
+        // Set up auth state change listener with improved handler
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-          if (mounted) {
-            // Update user state immediately when auth state changes
-            setUser(session?.user ?? null);
-            
-            // If signing out, make sure to mark that we're no longer in the signing out state
-            if (_event === 'SIGNED_OUT') {
-              setIsSigningOut(false);
-            } else if (_event === 'SIGNED_IN') {
-              // Make sure we're definitely not in a signing out state when signing in
-              setIsSigningOut(false);
+          if (!mounted) return;
+          
+          console.log(`Auth state change: ${_event}`, !!session?.user);
+          
+          // Always update our user state when session changes
+          setUser(session?.user ?? null);
+          
+          // Reset signing out state
+          if (_event === 'SIGNED_OUT' || _event === 'SIGNED_IN') {
+            setIsSigningOut(false);
+          }
+          
+          // For sign-in and sign-out events, trigger a robust refresh
+          if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT' || _event === 'TOKEN_REFRESHED') {
+            // Two-stage refresh strategy
+            // 1. Immediate state refresh
+            if (mounted) {
+              if (_event === 'SIGNED_IN') {
+                console.log("User signed in - refreshing UI");
+              } else if (_event === 'SIGNED_OUT') {
+                console.log("User signed out - refreshing UI");
+              }
             }
             
-            // Force component refresh through router refresh on important events
-            if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT' || _event === 'TOKEN_REFRESHED') {
-              router.refresh();
-            }
+            // 2. Secondary router refresh after a delay
+            setTimeout(() => {
+              if (mounted) {
+                router.refresh();
+              }
+            }, 300);
           }
         });
         
-        if (mounted) setIsLoading(false);
+        authSubscription = subscription;
         
-        return () => {
-          mounted = false;
-          subscription.unsubscribe();
-        };
+        // Final fallback - directly check user
+        if (!sessionData.session && mounted) {
+          const { data: userData, error } = await supabase.auth.getUser();
+          
+          if (error) {
+            console.error("Auth user check error:", error);
+            if (mounted) setUser(null);
+          } else if (mounted && userData.user) {
+            console.log("User found via getUser()");
+            setUser(userData.user);
+          }
+        }
+        
+        if (mounted) setIsLoading(false);
       } catch (err) {
         console.error("Error initializing auth:", err);
         if (mounted) {
@@ -92,10 +139,43 @@ export default function Navbar() {
       }
     };
     
+    // Run initialization immediately
     initializeAuthState();
     
+    // Set up an interval to periodically check auth state
+    // This helps catch edge cases where the listener might miss events
+    const authCheckInterval = setInterval(async () => {
+      try {
+        if (!mounted) return;
+        
+        const supabase = getOrCreateClient();
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Auth interval check error:", error);
+        } else if (mounted) {
+          // Only update if different to avoid unnecessary renders
+          const currentAuthState = !!user;
+          const newAuthState = !!data.session?.user;
+          
+          if (currentAuthState !== newAuthState) {
+            console.log("Auth state mismatch detected in interval check");
+            setUser(data.session?.user ?? null);
+            router.refresh();
+          }
+        }
+      } catch (err) {
+        console.error("Error in auth check interval:", err);
+      }
+    }, 10000); // Check every 10 seconds
+    
+    // Cleanup function
     return () => {
       mounted = false;
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
+      clearInterval(authCheckInterval);
     };
   }, [router]);
 
@@ -106,22 +186,15 @@ export default function Navbar() {
     try {
       // Set signing out state to prevent route-based auth detection
       setIsSigningOut(true);
-      // Immediately clear user state to update UI
-      setUser(null);
       
-      // Then perform the actual sign-out operations
-      await signOutAction();
+      // Perform the server-side sign-out operation - this is sufficient
+      // The onAuthStateChange listener will handle UI updates
+      const result = await signOutAction();
       
-      // Client-side signout
-      const supabase = getSupabase();
-      await supabase.auth.signOut();
-      
-      // Clear any cached auth state
-      localStorage.removeItem('supabase.auth.token');
-      
-      // Navigate after sign-out completed
-      router.push('/sign-in');
-      router.refresh();
+      // Only navigate after successful signout
+      if (result.success) {
+        router.push('/sign-in');
+      }
     } catch (error) {
       console.error('Error signing out:', error);
       // Reset signing out state if there was an error
@@ -129,22 +202,49 @@ export default function Navbar() {
     }
   };
 
-  // Get user authentication status from Supabase session
-  const hasValidUser = !!user && user.id !== 'temp-user-id';
+  // Memoized auth state calculation with improved reliability
+  const authState = React.useMemo(() => {
+    // User with valid session takes precedence over everything else
+    const hasValidUser = !!user && user.id !== 'temp-user-id';
+    
+    // Force unauthenticated view on login/signup pages regardless of session state
+    const forceUnauthenticatedPaths = [
+      '/sign-in', 
+      '/sign-up', 
+      '/forgot-password',
+      '/verify',
+      '/verify-reset-code'
+    ];
+    const isOnAuthPage = forceUnauthenticatedPaths.includes(pathname || '');
+    
+    // Auth detection with higher weight to actual user session
+    // If we have a valid user session, authentication is true regardless
+    // of anything else (except if signing out is in progress)
+    const isAuthenticated = !isSigningOut && (
+      hasValidUser || 
+      (!isOnAuthPage && isInProtectedRoute) // Only use route-based inference if not on an auth page
+    );
+    
+    // For debugging
+    if (hasValidUser && !isSigningOut) {
+      console.log("Authenticated via valid user session");
+    } else if (!isSigningOut && !isOnAuthPage && isInProtectedRoute) {
+      console.log("Authenticated via protected route inference");
+    }
+    
+    // Final auth state calculation
+    const showAuthenticatedUI = isAuthenticated && !isOnAuthPage;
+    
+    return {
+      hasValidUser,
+      isAuthenticated,
+      isOnAuthPage,
+      showAuthenticatedUI
+    };
+  }, [user, isSigningOut, isInProtectedRoute, pathname]);
   
-  // Check if we're on a protected route
-  const isProtectedRoute = pathname?.startsWith('/protected');
-  
-  // Determine authentication status based on multiple factors
-  const isAuthenticated = !isSigningOut && (hasValidUser || isProtectedRoute);
-
-  // Non-auth routes that should always show the signed-out navbar regardless of other factors
-  const forceUnauthenticatedPaths = ['/sign-in', '/sign-up', '/forgot-password'];
-  const isOnAuthPage = forceUnauthenticatedPaths.includes(pathname || '');
-  
-  // Final auth state determination - either we have a valid session or we're on a protected route
-  // but not if we're specifically on an auth page
-  const showAuthenticatedUI = isAuthenticated && !isOnAuthPage;
+  // Destructure for easier usage in JSX
+  const { showAuthenticatedUI } = authState;
 
   return (
     <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">

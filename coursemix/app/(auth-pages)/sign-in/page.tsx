@@ -33,9 +33,26 @@ export default function Login() {
       const result = await signInAction(formData);
       
       if (result.success) {
-        // Wait a brief moment for auth state to update
-        await new Promise(resolve => setTimeout(resolve, 100));
-        router.push('/protected/dashboard');
+        // Also perform client-side sign-in to ensure local state is updated immediately
+        // This helps with the Navbar not updating issue
+        const email = formData.get("email") as string;
+        const password = formData.get("password") as string;
+        
+        // Do a client-side sign-in to ensure cookies are set properly in the browser
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Wait longer for auth state to fully propagate
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Force a hard navigation to ensure full page refresh
+        window.location.href = '/protected/dashboard';
       }
     } catch (error) {
       console.error('Sign in error:', error);
